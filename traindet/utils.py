@@ -9,6 +9,7 @@ from gluoncv.data import transforms
 from PIL import Image
 import numpy as np
 import random
+import json
 import os
 from os.path import join as pjoin
 from traindet import config as cfg
@@ -28,25 +29,56 @@ def yolo2voc(data):
     return voc
 
 
+def load_targets(files_list):
+    target = []
+    for path in files_list:
+        with open(path, 'r') as f:
+            labels = []
+            for line in f:
+                data = [float(s) for s in line.strip().split(' ')]
+                label = yolo2voc(data)
+                labels.append(label)
+        target.append(np.array(labels))
+    
+    return target
+
+
+def process_examples(fn, tgt):
+
+        img = np.array(Image.open(fn))
+        heigt, width = img.shape[:2]
+        ntgt = np.zeros(shape=tgt.shape)
+        ntgt[:, [0, 2]] = tgt[:, [0, 2]] * width
+        ntgt[:, [1, 3]] = tgt[:, [1, 3]] * heigt
+        ntgt[:, 4] = tgt[:, 4]
+
+        return nd.array(img), np.array(ntgt)
+
+
 class RealDataset(gdata.Dataset):
     
-    def __init__(self, root=cfg.real_dataset_folder, train=True):
+    def __init__(self, root=cfg.real_dataset_folder, mode='train'):
         super(RealDataset, self).__init__()
-        classes = []
-        with open(pjoin(root, 'classes.txt'), 'r') as f:
-            for line in f:
-                classes.append(line.strip())
-        self.classes = classes
-        if train:
-            images_dir = pjoin(root, 'train')
-        else:
-            images_dir = pjoin(root, 'test')
-        files = sorted(os.listdir(images_dir))
-        img_fns  = [fn for fn in files if fn.split('.')[-1] == 'png']
+        self.classes = cfg.classes
+        # with open(pjoin(root, 'classes.txt'), 'r') as f:
+        #     for line in f:
+        #         classes.append(line.strip())
+        if mode == 'train':
+            images_dir = [pjoin(root, 'train')]
+        elif mode == 'test':
+            images_dir = [pjoin(root, 'test')]
+        elif mode == 'all':
+            images_dir = [pjoin(root, 'train'), pjoin(root, 'test')]
+
+        files = []
+        for img_dir in images_dir:
+            files.extend([pjoin(img_dir, fn) for fn in sorted(os.listdir(img_dir))])
+
+        img_fns  = [pjoin(root, fn) for fn in files if fn.split('.')[-1] == 'png']
         names = [s.split('.')[0] for s in img_fns]
         target = []
         for name in names:
-            path = pjoin(images_dir, name + '.txt')
+            path = name + '.txt'
             with open(path, 'r') as f:
                 labels = []
                 for line in f:
@@ -56,7 +88,6 @@ class RealDataset(gdata.Dataset):
             target.append(np.array(labels))
         
         assert(len(img_fns) == len(target))
-        img_fns = [pjoin(images_dir, fn) for fn in img_fns]
         self.fns = img_fns
         self.target = target
                   
@@ -81,24 +112,51 @@ class RealDataset(gdata.Dataset):
         return nd.array(img), np.array(ntgt)
 
 
-def load_model(model_name, ctx=mx.gpu()):
+class SynthDataset(gdata.Dataset):
+    def __init__(self, root=cfg.synth_dataset_folder, mode='train'):
+        super(SynthDataset, self).__init__()
+        self.classes = cfg.classes
+        if mode == 'train':
+            files = ['train.json']
+        elif mode == 'test':
+            files = ['test.json']
+        elif mode == 'all':
+            files = ['train.json', 'test.json']
+        else:
+            raise ValueError(f'Invalid mode {mode}.')
+        data = []
+        for fn in files:
+            with open(pjoin(root, fn), 'r') as f:
+                data.extend(json.load(f))
+
+        self.fns = [pjoin(root, d['img']) for d in data]
+        self.targets = load_targets([pjoin(root, d['label']) for d in data])
+    
+    def __len__(self):
+        return len(self.fns)
+
+    def __getitem__(self, idx):
+        return process_examples(self.fns[idx], self.targets[idx])
+
+
+def load_model(model_name, dataset, ctx=mx.gpu()):
 
     if model_name == 'ssd300':
         net = model_zoo.get_model('ssd_300_vgg16_atrous_coco', pretrained=True, ctx=ctx, prefix='ssd0_')
         # net = model_zoo.get_model('ssd_300_vgg16_atrous_coco', pretrained=True, ctx=ctx)
-        params_path = pjoin(cfg.project_folder, 'checkpoints/ssd300/transfer_300_ssd_300_vgg16_atrous_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'checkpoints/{dataset}/ssd300/transfer_300_ssd_300_vgg16_atrous_coco_best.params')
         transform = transforms.presets.ssd.SSDDefaultValTransform(width=300, height=300)
     elif model_name == 'ssd512':
         net = model_zoo.get_model('ssd_512_resnet50_v1_coco', pretrained=True, ctx=ctx, prefix='ssd0_')
-        params_path = pjoin(cfg.project_folder, 'checkpoints/ssd512/transfer_512_ssd_512_resnet50_v1_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'checkpoints/{dataset}/ssd512/transfer_512_ssd_512_resnet50_v1_coco_best.params')
         transform = transforms.presets.ssd.SSDDefaultValTransform(width=512, height=512)
     elif model_name == 'yolo416':
         net = model_zoo.get_model('yolo3_darknet53_coco', pretrained=True, ctx=ctx)
-        params_path = pjoin(cfg.project_folder, 'checkpoints/yolo416/transfer_416_yolo3_darknet53_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'checkpoints/{dataset}/yolo416/transfer_416_yolo3_darknet53_coco_best.params')
         transform = transforms.presets.yolo.YOLO3DefaultValTransform(width=416, height=416)
     elif model_name == 'frcnn':
         net = model_zoo.get_model('faster_rcnn_resnet50_v1b_coco', pretrained=True, ctx=ctx)
-        params_path = pjoin(cfg.project_folder, 'checkpoints/faster_rcnn/transfer_faster_rcnn_resnet50_v1b_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'checkpoints/{dataset}/faster_rcnn/transfer_faster_rcnn_resnet50_v1b_coco_best.params')
         transform = transforms.presets.rcnn.FasterRCNNDefaultValTransform(short=600)
     else:
         raise NotImplementedError(f'Model {model_name} is not implemented.')
@@ -140,8 +198,18 @@ def parse_log(prefix):
 
 if __name__ == '__main__':
 
-    prefix = 'checkpoints/ssd512/transfer_512_ssd_512_resnet50_v1_coco'
+    # prefix = 'checkpoints/ssd512/transfer_512_ssd_512_resnet50_v1_coco'
+    # epo, out = parse_log(prefix)
+    # print(epo, out)
+    trn_ds = RealDataset(mode='train')
+    test_ds = RealDataset(mode='test')
+    all_ds = RealDataset(mode='all')
+    print(len(trn_ds), len(test_ds), len(all_ds))
+    print(all_ds[0])
 
-    epo, out = parse_log(prefix)
+    trn_ds = SynthDataset(mode='train')
+    test_ds = SynthDataset(mode='test')
+    all_ds = SynthDataset(mode='all')
 
-    print(epo, out)
+    print(len(trn_ds), len(test_ds), len(all_ds))
+    print(all_ds[0])

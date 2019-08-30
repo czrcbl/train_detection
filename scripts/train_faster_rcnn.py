@@ -22,7 +22,7 @@ from gluoncv.data.transforms.presets.rcnn import FasterRCNNDefaultTrainTransform
 from gluoncv.utils.metrics.voc_detection import VOC07MApMetric
 from gluoncv.utils.metrics.coco_detection import COCODetectionMetric
 
-from traindet.utils import RealDataset
+from traindet.train_utils import get_dataset
 from gluoncv import model_zoo
 
 def parse_args():
@@ -193,22 +193,22 @@ class RCNNL1LossMetric(mx.metric.EvalMetric):
         self.num_inst += num_inst.asscalar()
 
 
-def get_dataset(dataset, args):
+# def get_dataset(dataset, args):
 
-    if dataset.lower() == 'real':
-        if args.dataset_root:
-            train_dataset = RealDataset(root=args.dataset_root)
-            val_dataset = RealDataset(root=args.dataset_root, train=False)
-        else:
-            train_dataset = RealDataset()
-            val_dataset = RealDataset(train=False)
-        val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
-    else:
-        raise NotImplementedError('Dataset: {} not implemented.'.format(dataset))
-    if args.mixup:
-        from gluoncv.data.mixup import detection
-        train_dataset = detection.MixupDetection(train_dataset)
-    return train_dataset, val_dataset, val_metric
+#     if dataset.lower() == 'real':
+#         if args.dataset_root:
+#             train_dataset = RealDataset(root=args.dataset_root)
+#             val_dataset = RealDataset(root=args.dataset_root, train=False)
+#         else:
+#             train_dataset = RealDataset()
+#             val_dataset = RealDataset(train=False)
+#         val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
+#     else:
+#         raise NotImplementedError('Dataset: {} not implemented.'.format(dataset))
+#     if args.mixup:
+#         from gluoncv.data.mixup import detection
+#         train_dataset = detection.MixupDetection(train_dataset)
+#     return train_dataset, val_dataset, val_metric
 
 
 def get_dataloader(net, train_dataset, val_dataset, train_transform, val_transform, batch_size,
@@ -458,7 +458,7 @@ if __name__ == '__main__':
     args.batch_size = len(ctx)  # 1 batch per device
 
     # training data
-    train_dataset, val_dataset, eval_metric = get_dataset(args.dataset, args)
+    train_dataset, val_dataset, eval_metric = get_dataset(args.dataset, args.mixup)
 
     if args.transfer:
         net_name = f'transfer_{args.base_model}'

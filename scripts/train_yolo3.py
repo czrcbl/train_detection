@@ -21,7 +21,7 @@ from gluoncv.utils.metrics.voc_detection import VOC07MApMetric
 from gluoncv.utils.metrics.coco_detection import COCODetectionMetric
 from gluoncv.utils import LRScheduler, LRSequential
 
-from traindet.utils import RealDataset
+from traindet.train_utils import get_dataset
 from gluoncv import model_zoo
 
 def parse_args():
@@ -83,8 +83,8 @@ def parse_args():
                              'training time if validation is slow.')
     parser.add_argument('--seed', type=int, default=233,
                         help='Random seed to be fixed.')
-    parser.add_argument('--num-samples', type=int, default=-1,
-                        help='Training images. Use -1 to automatically get the number.')
+    # parser.add_argument('--num-samples', type=int, default=-1,
+    #                     help='Training images. Use -1 to automatically get the number.')
     parser.add_argument('--syncbn', action='store_true',
                         help='Use synchronize BN across devices.')
     parser.add_argument('--no-random-shape', action='store_true',
@@ -100,23 +100,23 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def get_dataset(dataset, args):
-    if dataset.lower() == 'real':
-        if args.dataset_root:
-            train_dataset = RealDataset(root=args.dataset_root)
-            val_dataset = RealDataset(root=args.dataset_root, train=False)
-        else:
-            train_dataset = RealDataset()
-            val_dataset = RealDataset(train=False)
-        val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
-    else:
-        raise NotImplementedError('Dataset: {} not implemented.'.format(dataset))
-    if args.num_samples < 0:
-        args.num_samples = len(train_dataset)
-    if args.mixup:
-        from gluoncv.data import MixupDetection
-        train_dataset = MixupDetection(train_dataset)
-    return train_dataset, val_dataset, val_metric
+# def get_dataset(dataset, args):
+#     if dataset.lower() == 'real':
+#         if args.dataset_root:
+#             train_dataset = RealDataset(root=args.dataset_root)
+#             val_dataset = RealDataset(root=args.dataset_root, train=False)
+#         else:
+#             train_dataset = RealDataset()
+#             val_dataset = RealDataset(train=False)
+#         val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
+#     else:
+#         raise NotImplementedError('Dataset: {} not implemented.'.format(dataset))
+#     # if args.num_samples < 0:
+#     #     args.num_samples = len(train_dataset)
+#     if args.mixup:
+#         from gluoncv.data import MixupDetection
+#         train_dataset = MixupDetection(train_dataset)
+#     return train_dataset, val_dataset, val_metric
 
 def get_dataloader(net, train_dataset, val_dataset, data_shape, batch_size, num_workers, args):
     """Get dataloader."""
@@ -309,8 +309,9 @@ if __name__ == '__main__':
     ctx = [mx.gpu(int(i)) for i in args.gpus.split(',') if i.strip()]
     ctx = ctx if ctx else [mx.cpu()]
 
-    train_dataset, val_dataset, eval_metric = get_dataset(args.dataset, args)
-
+    train_dataset, val_dataset, eval_metric = get_dataset(args.dataset, args.mixup)
+    args.num_samples = len(train_dataset)
+    
     if args.transfer:
         net_name = f'transfer_{args.data_shape}_{args.base_model}'
     else:

@@ -20,7 +20,7 @@ from gluoncv.utils.metrics.voc_detection import VOC07MApMetric
 from gluoncv.utils.metrics.coco_detection import COCODetectionMetric
 from gluoncv.utils.metrics.accuracy import Accuracy
 
-from traindet.utils import RealDataset
+from traindet.train_utils import get_dataset
 from gluoncv import model_zoo
 
 def parse_args():
@@ -74,19 +74,19 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def get_dataset(dataset, args):
-    if dataset.lower() == 'real':
-        if args.dataset_root:
-            train_dataset = RealDataset(root=args.dataset_root)
-            val_dataset = RealDataset(root=args.dataset_root, train=False)
-        else:
-            train_dataset = RealDataset()
-            val_dataset = RealDataset(train=False)
-    else:
-        raise NotImplementedError('Dataset: {} not implemented.'.format(dataset))
-    val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)    
+# def get_dataset(dataset, args):
+#     if dataset.lower() == 'real':
+#         if args.dataset_root:
+#             train_dataset = RealDataset(root=args.dataset_root)
+#             val_dataset = RealDataset(root=args.dataset_root, train=False)
+#         else:
+#             train_dataset = RealDataset()
+#             val_dataset = RealDataset(train=False)
+#     else:
+#         raise NotImplementedError('Dataset: {} not implemented.'.format(dataset))
+#     val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)    
 
-    return train_dataset, val_dataset, val_metric
+#     return train_dataset, val_dataset, val_metric
 
 
 def get_dataloader(net, train_dataset, val_dataset, data_shape, batch_size, num_workers):
@@ -110,7 +110,7 @@ def save_params(net, best_map, current_map, epoch, save_interval, prefix):
     current_map = float(current_map)
     if current_map > best_map[0]:
         best_map[0] = current_map
-        net.save_params('{:s}_best.params'.format(prefix, epoch, current_map))
+        net.save_parameters('{:s}_best.params'.format(prefix, epoch, current_map))
         with open(prefix+'_best_map.log', 'a') as f:
             f.write('{:04d}:\t{:.4f}\n'.format(epoch, current_map))
     if save_interval and epoch % save_interval == 0:
@@ -236,7 +236,7 @@ if __name__ == '__main__':
     ctx = [mx.gpu(int(i)) for i in args.gpus.split(',') if i.strip()]
     ctx = ctx if ctx else [mx.cpu()]
 
-    train_dataset, val_dataset, eval_metric = get_dataset(args.dataset, args)
+    train_dataset, val_dataset, eval_metric = get_dataset(args.dataset)
 
     if args.transfer:
         net_name = f'transfer_{args.data_shape}_{args.base_model}'
