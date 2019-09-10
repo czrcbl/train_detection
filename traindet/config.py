@@ -9,6 +9,11 @@ project_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 dataset_folder = pjoin(project_folder, 'datasets')
 gen_data_folder = pjoin(project_folder, 'gen_data')
 
+project_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+assets_folder = pjoin(project_folder, 'assets')
+parts_folder = pjoin(assets_folder, 'stl_models')
+backgrounds_folder = pjoin(assets_folder, 'backgrounds')
+
 # Datasets
 real_dataset_folder = pjoin(dataset_folder, 'real')
 synth_dataset_folder = pjoin(dataset_folder, 'synth')

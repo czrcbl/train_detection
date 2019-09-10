@@ -8,11 +8,16 @@ from gluoncv.data import transforms
 # from sklearn.metrics import confusion_matrix
 from PIL import Image
 import numpy as np
+import pandas as pd
 import random
 import json
 import os
+import pickle
 from os.path import join as pjoin
+from copy import copy
+
 from traindet import config as cfg
+
 
 def yolo2voc(data):
     """Convert yolo format to voc, both in relative coordinates."""
@@ -194,6 +199,45 @@ def parse_log(prefix):
     # out = dict(exec(''.join(out)))
 
     return epo, out
+
+
+def load_map(dataset):
+    
+    models = cfg.model_names
+    prefixes = [
+        f'checkpoints/{dataset}/ssd300/transfer_300_ssd_300_vgg16_atrous_coco',
+        f'checkpoints/{dataset}/ssd512/transfer_512_ssd_512_resnet50_v1_coco',
+        f'checkpoints/{dataset}/yolo416/transfer_416_yolo3_darknet53_coco',
+        f'checkpoints/{dataset}/faster_rcnn/transfer_faster_rcnn_resnet50_v1b_coco'
+    ]
+    paths = [pjoin(cfg.project_folder, p) for p in prefixes]
+    out = {}
+    epochs = {}
+    for model, path in zip(models, paths):
+        epochs[model], out[model] = parse_log(path)
+        
+    index = copy(cfg.classes)
+    index.append('mAP')
+    map_df = pd.DataFrame(out, index=index)
+    map_df.columns = cfg.formated_model_names
+    index = copy(cfg.formated_classes)
+    index.append('mAP')
+    map_df.index = index
+    
+    epoch_df = pd.DataFrame(epochs, index=cfg.classes)
+    
+    return map_df, epoch_df
+    
+
+def load_predictions(dataset):
+
+    out = {}
+    for model in cfg.model_names:
+        path = pjoin(cfg.gen_data_folder, f'predictions/{model}_{dataset}.pkl')
+        with open(path, 'rb') as f:
+            out[model] = pickle.load(f)
+
+    return out
 
 
 if __name__ == '__main__':

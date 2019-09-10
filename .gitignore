@@ -8,7 +8,10 @@ outputs/*
 .vscode/*
 gen_data/*
 !gen_data/GEN_DATA.md
-nbs/visualizations.ipynb
+assets/*
+!assets/ASSETS.md
+backups/*
+nbs/*
 
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python
