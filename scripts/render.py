@@ -10,11 +10,11 @@ from os.path import join as pjoin
 
 from traindet import config as cfg
 
-def add_background(args):
+def add_background(rendered_folder, output_folder, args):
     
-    rendered_folder = Path(f'{cfg.assets_folder}/rendered_images/{args.mode}')
+    rendered_folder = Path(rendered_folder)
     backgrouds_folder = Path(cfg.backgrounds_folder)
-    output_folder = Path(cfg.dataset_folder) / Path(args.out_dataset_folder)
+    output_folder =  Path(output_folder)
 
     classes = os.listdir(rendered_folder)
 
@@ -95,10 +95,11 @@ def main():
     for key, val in args._get_kwargs():
         command += f' --{key} {val}'
 
+    output_folder = pjoin(cfg.project_folder, 'temp')
     extra_args = {
         'assets_folder': cfg.assets_folder,
         'parts_folder': cfg.parts_folder,
-        'output_folder': pjoin(cfg.project_folder, 'temp')
+        'output_folder': output_folder
     }
     for key, val in extra_args.items():
         command += f' --{key} {val}'
@@ -106,7 +107,7 @@ def main():
     print(command.split())
     subprocess.call(command.split())
 
-    add_background(args)
+    add_background(pjoin(output_folder, 'rendered_images'), pjoin('temp', args.out_dataset_folder), args)
     split_dataset(args)
 
 if __name__ == '__main__':
