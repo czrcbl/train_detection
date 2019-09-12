@@ -71,10 +71,11 @@ def parse_args():
     parser = argparse.ArgumentParser('Render parts images on blender.')
     parser.add_argument('--mode', default='test', 
         help='The mode of the rendering.')
-    parser.add_argument('--out-dataset-folder', default='synth', 
+    parser.add_argument('--dataset-name', 
         help='The name of the output dataset.')
     parser.add_argument('--seed', default=233)
     parser.add_argument('--train_fraq', default=0.7)
+    parser.add_argument('--output_folder', default=pjoin(cfg.project_folder, 'temp'))
     args = parser.parse_args()
 
     assert (args.out_dataset_folder not in os.listdir(cfg.dataset_folder)),\
@@ -95,11 +96,9 @@ def main():
     for key, val in args._get_kwargs():
         command += f' --{key} {val}'
 
-    output_folder = pjoin(cfg.project_folder, 'temp')
     extra_args = {
         'assets_folder': cfg.assets_folder,
         'parts_folder': cfg.parts_folder,
-        'output_folder': output_folder
     }
     for key, val in extra_args.items():
         command += f' --{key} {val}'

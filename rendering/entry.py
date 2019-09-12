@@ -132,11 +132,9 @@ def parse_args():
     return args
 
 
-def main():
+def deterministic_render():
 
     args = parse_args()
-    # mode = 'small'
-
     root_dir = args.output_folder
     output_folder = pjoin(root_dir, f'rendered_images/{args.mode}')
 
@@ -170,9 +168,6 @@ def main():
     for obj_number, part in enumerate(parts):
         
         clear()
-        # scene = bpy.context.scene
-        # scene.cycles.device = 'GPU'
-        #load and position mesh
         name = part['name']
         obj = load_stl(pjoin(args.parts_folder, f'{name}.stl'))
         center_rotate_obj(obj, part['rot'])
@@ -184,16 +179,7 @@ def main():
         
         scene.camera.data.clip_end = 10000
 
-        #write_bounds_2d(filepath, scene, cam_ob, obj, frame_start, frame_end)
         distances, vert_angles, rot_angles = get_params(part, mode=args.mode)
-        
-        #distances = part['dists']
-        #if is_test:
-        #    vert_angles = (0, math.pi/6, math.pi/3)[:1]
-        #    rot_angles = [2*math.pi/8 * x for x in range(8)][:1]
-        #else:
-        #    vert_angles = (0, math.pi/6, math.pi/3)
-        #    rot_angles = [2*math.pi/8 * x for x in range(8)]
 
         prefix = pjoin(output_folder, part['name'])
         i = 0
@@ -225,6 +211,95 @@ def main():
                         render_scene_bb(scene, cam_ob, obj, obj_number, fprefix)
                         
                         i += 1
+
+
+def random_render():
+    """Render the object in random positions.""""
+    args = parse_args()
+    root_dir = args.output_folder
+    output_folder = pjoin(root_dir, f'rendered_images/test_random')
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    random.seed(args.seed)
+
+    n_views = 10
+    params_range = {
+        'energy': (10e5, 10e6),
+        'rot_x': (0, 2 * math.pi),
+        'rot_y': (0, 2 * math.pi),
+        'rot_z': (0, 2 * math.pi),
+        'distances': (300, 2000),
+        'lamp_r': (300, 1000)
+    }
+
+    lamp = None
+
+
+    prefs = bpy.context.preferences
+    cuda_devices, opencl_devices = bpy.context.preferences.addons['cycles'].preferences.get_devices()
+
+    # Set GPU rendering
+    scene = bpy.context.scene
+    scene.render.engine = 'CYCLES'
+    scene.cycles.device = 'GPU'
+    cprefs = prefs.addons['cycles'].preferences
+    try:
+        cprefs.compute_device_type = 'CUDA'
+    except TypeError:
+        print("Could not enable CUDA")
+        raise ValueError('GPU not supported')
+
+    for device in cuda_devices:
+        print(f'Activating {device.name}')
+        device.use = True
+
+    for obj_number, part in enumerate(parts):
+        
+        clear()
+        name = part['name']
+        obj = load_stl(pjoin(args.parts_folder, f'{name}.stl'))
+
+        cam = bpy.data.cameras.new("Camera")
+        cam_ob = bpy.data.objects.new("Camera", cam)
+        bpy.context.collection.objects.link(cam_ob)
+        scene.camera = cam_ob
+        
+        scene.camera.data.clip_end = 10000
+
+        distances, vert_angles, rot_angles = get_params(part, mode=args.mode)
+
+        prefix = pjoin(output_folder, part['name'])
+
+        for i in range(n_views):
+            center_rotate_obj(obj, part['rot'])
+            rot_x = random.uniform(*params_range['rot_x'])
+            rot_y = random.uniform(*params_range['rot_y'])
+            rot_z = random.uniform(*params_range['rot_z'])
+            dist = random.uniform(*params_range['distance'])
+            energy = random.uniform(*params_range['energy'])
+
+            obj.rotation_euler = (rot_x, rot_y, rot_z)
+            cam_ob.location = (dist, y, z)
+            pos = update_camera(cam_ob, Vector((0, 0, 0)))
+            lx = random.uniform(*params_range['lamp_r'])
+            ly = random.uniform(*params_range['lamp_r'])
+            lz = random.uniform(*params_range['lamp_r'])
+            lamp = create_lamp(Vector((l_x, l_y, l_z)), energy)
+
+            fprefix = pjoin(prefix, str(i))
+            render_scene_bb(scene, cam_ob, obj, obj_number, fprefix)
+
+
+def main():
+
+    args = parse_args()
+
+    if args.mode = 'random':
+        random_render()
+
+
 
 if __name__ == '__main__':
     
