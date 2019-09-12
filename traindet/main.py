@@ -175,8 +175,4 @@ def benchmark_all(n_samples, output_path):
 
 if __name__ == '__main__':
 
-    val_ds = RealDataset(train=False)
-    
-    predict_and_store(val_ds, 'gen_data/predictions.pkl')
-    
-    benchmark_all(20, 'gen_data/benchmarks.pkl')
+    pass

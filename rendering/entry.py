@@ -8,7 +8,7 @@ import mathutils
 from os.path import join as pjoin
 import random
 
-from rendering.render_utils import Box, camera_view_bounds_2d
+from rendering.render_utils import Box, camera_view_bounds_2d, get_params
 from rendering.render_config import parts
 from rendering import render_config as rcfg
 
@@ -119,28 +119,9 @@ def render_scene_bb(scene, cam_ob, obj, obj_number, prefix):
     coords = list(convertbb(coords))
     coords.insert(0, obj_number)
     coords = custom2yolo(coords)
-    print(coords)
     with open(filepath, "w") as file:
-        #file.write("%f %f %f %f\n" % convertbb(camera_view_bounds_2d(scene, cam_ob, obj).to_tuple()))
         file.write("%i %f %f %f %f\n" % tuple(coords))
 
-
-def get_params(part, mode='test'):
-    
-    distances = part['dists']
-    if mode == 'test':
-        vert_angles = (0, math.pi/6, math.pi/3)[:1]
-        rot_angles = [2*math.pi/8 * x for x in range(8)][:1]
-    elif mode == 'small':
-        vert_angles = (0, math.pi/6, math.pi/3, -math.pi/3, -math.pi/6)
-        rot_angles = [math.pi/2/5 * x for x in range(5)]
-    else:
-        raise ValueError('There is no mode {mode}.') 
-        
-        
-    return distances, vert_angles, rot_angles       
-
-# Execution Params ##########################################################################################
 
 def parse_args():
     
@@ -164,16 +145,33 @@ def main():
 
     random.seed(args.seed)
 
-    ########################################################################################################
     energy = 10**6
     lamp = None
+
+
+    prefs = bpy.context.preferences
+    cuda_devices, opencl_devices = bpy.context.preferences.addons['cycles'].preferences.get_devices()
+
+    # Set GPU rendering
+    scene = bpy.context.scene
+    scene.render.engine = 'CYCLES'
+    scene.cycles.device = 'GPU'
+    cprefs = prefs.addons['cycles'].preferences
+    try:
+        cprefs.compute_device_type = 'CUDA'
+    except TypeError:
+        print("Could not enable CUDA")
+        raise ValueError('GPU not supported')
+
+    for device in cuda_devices:
+        print(f'Activating {device.name}')
+        device.use = True
 
     for obj_number, part in enumerate(parts):
         
         clear()
-        scene = bpy.context.scene
-        scene.cycles.device = 'GPU'
-
+        # scene = bpy.context.scene
+        # scene.cycles.device = 'GPU'
         #load and position mesh
         name = part['name']
         obj = load_stl(pjoin(args.parts_folder, f'{name}.stl'))
@@ -200,31 +198,33 @@ def main():
         prefix = pjoin(output_folder, part['name'])
         i = 0
         n = 0
-        for dist in distances:
-            n += 1
-            for vert_angle in vert_angles:
-                for rot_angle in rot_angles:
-                    
-                    z = dist * math.sin(vert_angle)
-                    d = dist * math.cos(vert_angle)
-                    x = d * math.cos(rot_angle)
-                    y = d * math.sin(rot_angle)
-                    
-                    l_z = 10 * math.sin(vert_angle)
-                    l_d = 10 * math.cos(vert_angle)
-                    l_x = l_d * math.cos(rot_angle)
-                    l_y = l_d * math.sin(rot_angle)
-                    
-                    cam_ob.location = (x, y, z)
-                    pos = update_camera(cam_ob, Vector((0, 0, 0)))
-                    del lamp
-                    lamp = create_lamp(Vector((0, 0, 0)), energy)
-                    lamp.location = pos + Vector((l_x, l_y, l_z))
-                    fprefix = pjoin(prefix, str(i))
-                    
-                    render_scene_bb(scene, cam_ob, obj, obj_number, fprefix)
-                    
-                    i += 1
+        for obj_rot in (0, math.pi/2):
+            obj.rotation_euler = tuple([a + b for a, b in zip(part['rot'], (obj_rot, 0, 0))]) 
+            for dist in distances:
+                n += 1
+                for vert_angle in vert_angles:
+                    for rot_angle in rot_angles:
+                        
+                        z = dist * math.sin(vert_angle)
+                        d = dist * math.cos(vert_angle)
+                        x = d * math.cos(rot_angle)
+                        y = d * math.sin(rot_angle)
+                        
+                        l_z = 10 * math.sin(vert_angle)
+                        l_d = 10 * math.cos(vert_angle)
+                        l_x = l_d * math.cos(rot_angle)
+                        l_y = l_d * math.sin(rot_angle)
+                        
+                        cam_ob.location = (x, y, z)
+                        pos = update_camera(cam_ob, Vector((0, 0, 0)))
+                        del lamp
+                        lamp = create_lamp(Vector((0, 0, 0)), energy)
+                        lamp.location = pos + Vector((l_x, l_y, l_z))
+                        fprefix = pjoin(prefix, str(i))
+                        
+                        render_scene_bb(scene, cam_ob, obj, obj_number, fprefix)
+                        
+                        i += 1
 
 if __name__ == '__main__':
     

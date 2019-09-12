@@ -32,7 +32,7 @@ def main():
     if args.model == 'all':
         models = cfg.model_names 
     else:
-        models = args.models.split(',')
+        models = args.model.split(',')
 
     for dataset in datasets:
         _, val_ds, _ = get_dataset(dataset)

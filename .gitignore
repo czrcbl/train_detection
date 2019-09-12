@@ -1,17 +1,16 @@
 misc/*
 old/*
-checkpoints/*
-!checkpoints/CHECKPOINTS.md
-datasets/*
-!datasets/DATASETS.md
+data/*
 outputs/*
-.vscode/*
-gen_data/*
-!gen_data/GEN_DATA.md
-assets/*
-!assets/ASSETS.md
 backups/*
-nbs/*
+test_nbs/*
+
+!data/datasets/DATASETS.md
+!data/checkpoints/CHECKPOINTS.md
+!data/gen_data/GEN_DATA.md
+!data/assets/ASSETS.md
+
+.vscode/*
 
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python

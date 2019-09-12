@@ -6,11 +6,12 @@ os.environ['MXNET_CUDNN_AUTOTUNE_DEFAULT'] = '0'
 
 # Folders
 project_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-dataset_folder = pjoin(project_folder, 'datasets')
-gen_data_folder = pjoin(project_folder, 'gen_data')
+data_folder = pjoin(project_folder, 'data')
+dataset_folder = pjoin(data_folder, 'datasets')
+gen_data_folder = pjoin(data_folder, 'gen_data')
+checkpoints_folder = pjoin(data_folder, 'checkpoints')
 
-project_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-assets_folder = pjoin(project_folder, 'assets')
+assets_folder = pjoin(data_folder, 'assets')
 parts_folder = pjoin(assets_folder, 'stl_models')
 backgrounds_folder = pjoin(assets_folder, 'backgrounds')
 
@@ -43,7 +44,12 @@ formated_classes = [
     'Part 03']
 
 
-dataset_names = ['real', 'synth', 'mixed']
+dataset_names = [
+    'real',  # Real Object Photos
+    'synth', # Synthesized 
+    'mixed', # Train on synth, test on real
+    'synth02'
+    ]
 
 # Metric
 eval_metric = VOC07MApMetric(iou_thresh=0.5, class_names=classes)

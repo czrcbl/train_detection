@@ -9,12 +9,11 @@ from PIL import Image
 from os.path import join as pjoin
 
 from traindet import config as cfg
-from rendering import render_config as rcfg
 
 def add_background(args):
     
-    rendered_folder = Path(f'{rcfg.assets_folder}/rendered_images/{args.mode}')
-    backgrouds_folder = Path(rcfg.backgrounds_folder)
+    rendered_folder = Path(f'{cfg.assets_folder}/rendered_images/{args.mode}')
+    backgrouds_folder = Path(cfg.backgrounds_folder)
     output_folder = Path(cfg.dataset_folder) / Path(args.out_dataset_folder)
 
     classes = os.listdir(rendered_folder)

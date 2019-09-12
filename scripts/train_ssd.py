@@ -20,7 +20,7 @@ from gluoncv.utils.metrics.voc_detection import VOC07MApMetric
 from gluoncv.utils.metrics.coco_detection import COCODetectionMetric
 from gluoncv.utils.metrics.accuracy import Accuracy
 
-from traindet.train_utils import get_dataset
+from traindet.train_utils import get_dataset, save_params
 from gluoncv import model_zoo
 
 def parse_args():
@@ -64,7 +64,7 @@ def parse_args():
                         help='Logging mini-batch interval. Default is 100.')
     parser.add_argument('--save-prefix', type=str, default='',
                         help='Saving parameter prefix')
-    parser.add_argument('--save-interval', type=int, default=10,
+    parser.add_argument('--save-interval', type=int, default=0,
                         help='Saving parameters epoch interval, best model will always be saved.')
     parser.add_argument('--val-interval', type=int, default=1,
                         help='Epoch interval for validation, increase the number will reduce the '
@@ -106,15 +106,15 @@ def get_dataloader(net, train_dataset, val_dataset, data_shape, batch_size, num_
     return train_loader, val_loader
 
 
-def save_params(net, best_map, current_map, epoch, save_interval, prefix):
-    current_map = float(current_map)
-    if current_map > best_map[0]:
-        best_map[0] = current_map
-        net.save_parameters('{:s}_best.params'.format(prefix, epoch, current_map))
-        with open(prefix+'_best_map.log', 'a') as f:
-            f.write('{:04d}:\t{:.4f}\n'.format(epoch, current_map))
-    if save_interval and epoch % save_interval == 0:
-        net.save_parameters('{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map))
+# def save_params(net, best_map, current_map, epoch, save_interval, prefix):
+#     current_map = float(current_map)
+#     if current_map > best_map[0]:
+#         best_map[0] = current_map
+#         net.save_parameters('{:s}_best.params'.format(prefix, epoch, current_map))
+#         with open(prefix+'_best_map.log', 'a') as f:
+#             f.write('{:04d}:\t{:.4f}\n'.format(epoch, current_map))
+#     if save_interval and epoch % save_interval == 0:
+#         net.save_parameters('{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map))
 
 def validate(net, val_data, ctx, eval_metric):
     """Test on validation dataset."""
@@ -225,7 +225,7 @@ def train(net, train_data, val_data, eval_metric, ctx, args):
             current_map = float(mean_ap[-1])
         else:
             current_map = 0.
-        save_params(net, best_map, current_map, epoch, args.save_interval, args.save_prefix)
+        save_params(net, logger, best_map, current_map, epoch, args.save_interval, args.save_prefix)
 
 if __name__ == '__main__':
     args = parse_args()

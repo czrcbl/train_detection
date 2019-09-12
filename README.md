@@ -7,13 +7,13 @@ the article [to be published](article_link).
 
 ## Structure
 
-
-* Folder `traindet` has the core functionalities from training and evaluating
+* Folder `traindet` has the core utlities from training and evaluating
 the models.
-* Folder `rendering` has all the code that is supposed to be run through blender
+* Folder `rendering` has all the code that is supposed to be run through blender.
 * Folder `scripts` has the scripts for launching the networks training and also
-from start the rendering of systetic images
-
+for starting the rendering of synthetic images.
+* All the data to train the models should be placed on the  `data` folder.
+All generated data is also placed in this folder.
 
 ## Reproducing
 
@@ -29,12 +29,10 @@ training
 Then, run:
 
 ``` bash
-python traindet/main.py
+python scripts/make_predictions.py --modeel all --dataset all
 ```
 
-To apply the models to the validation set, perform the benchmarks and store the results on the `gen_data`
+To apply the models to the validation set and store the results on the `data/gen_data`
 folder.
 
-In the folder `nbs` there notebooks that compile the results.
-The notebook `results.ipynb` contains the steps to compile the tables and metrics.
-The notebook `visualization` contains a visualization of the validation.
+In the folder `nbs` there will be notebooks that compile the results.

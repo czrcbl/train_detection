@@ -1,21 +1,12 @@
 from mathutils import Vector
-
+import math
+from rendering import render_config as rcfg
 
 def get_params(part, mode='test'):
     
-    distances = part['dists']
-    if mode == 'test':
-        vert_angles = (0, math.pi/6, math.pi/3)[:1]
-        rot_angles = [2*math.pi/8 * x for x in range(8)][:1]
-    elif mode == 'small':
-        vert_angles = (0, math.pi/6, math.pi/3, -math.pi/3, -math.pi/6)
-        rot_angles = [math.pi/2/5 * x for x in range(5)]
-    else:
-        raise ValueError('There is no mode {mode}.') 
+    data = rcfg.params[mode]
         
-        
-    return distances, vert_angles, rot_angles       
-
+    return data['dists'], data['vert_angles'], data['rot_angles']       
 
 def clamp(x, minimum, maximum):
     return max(minimum, min(x, maximum))

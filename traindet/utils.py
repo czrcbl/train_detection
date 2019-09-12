@@ -201,30 +201,35 @@ def parse_log(prefix):
     return epo, out
 
 
-def load_map(dataset):
+def load_map(model, dataset):
     
-    models = cfg.model_names
-    prefixes = [
-        f'checkpoints/{dataset}/ssd300/transfer_300_ssd_300_vgg16_atrous_coco',
-        f'checkpoints/{dataset}/ssd512/transfer_512_ssd_512_resnet50_v1_coco',
-        f'checkpoints/{dataset}/yolo416/transfer_416_yolo3_darknet53_coco',
-        f'checkpoints/{dataset}/faster_rcnn/transfer_faster_rcnn_resnet50_v1b_coco'
-    ]
-    paths = [pjoin(cfg.project_folder, p) for p in prefixes]
+    prefixes = {
+        'ssd300': f'{dataset}/ssd300/transfer_300_ssd_300_vgg16_atrous_coco',
+        'ssd512': f'{dataset}/ssd512/transfer_512_ssd_512_resnet50_v1_coco',
+        'yolo416': f'{dataset}/yolo416/transfer_416_yolo3_darknet53_coco',
+        'frcnn': f'{dataset}/faster_rcnn/transfer_faster_rcnn_resnet50_v1b_coco'
+    }
+    if model == 'all':
+        models = cfg.model_names
+    else:
+        models = [model]
+
+    # paths = [pjoin(cfg.project_folder, p) for p in prefixes]
     out = {}
     epochs = {}
-    for model, path in zip(models, paths):
+    for model in models:
+        path = pjoin(cfg.checkpoints_folder, prefixes[model])
         epochs[model], out[model] = parse_log(path)
         
     index = copy(cfg.classes)
     index.append('mAP')
     map_df = pd.DataFrame(out, index=index)
-    map_df.columns = cfg.formated_model_names
+    map_df.columns = models
     index = copy(cfg.formated_classes)
     index.append('mAP')
     map_df.index = index
     
-    epoch_df = pd.DataFrame(epochs, index=cfg.classes)
+    epoch_df = pd.DataFrame(epochs, index=[0])
     
     return map_df, epoch_df
     
