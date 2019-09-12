@@ -15,7 +15,7 @@ def train_ssd300(epochs, dataset):
             --base-model ssd_300_vgg16_atrous_coco
             --data-shape 300
             --dataset {dataset}
-            --save-prefix checkpoints/{dataset}/ssd300/
+            --save-prefix {cfg.checkpoints_folder}/{dataset}/ssd300/
             --batch-size 4
             --epochs {epochs}
             --lr 0.001
@@ -37,7 +37,7 @@ def train_ssd512(epochs, dataset):
             --base-model ssd_512_resnet50_v1_coco
             --data-shape 512
             --dataset {dataset}
-            --save-prefix checkpoints/{dataset}/ssd512/
+            --save-prefix {cfg.checkpoints_folder}/{dataset}/ssd512/
             --batch-size 4
             --epochs {epochs}
             --lr 0.001
@@ -61,7 +61,7 @@ def train_yolo3(epochs, dataset):
             --data-shape 416
             --dataset {dataset}
             --batch-size 4
-            --save-prefix checkpoints/{dataset}/yolo416/
+            --save-prefix {cfg.checkpoints_folder}/{dataset}/yolo416/
             --epochs {epochs}
             --lr 0.0001
             --lr-decay 0.1
@@ -82,7 +82,7 @@ def train_frcnn(epochs, dataset):
             --transfer
             --base-model faster_rcnn_resnet50_v1b_coco
             --dataset {dataset}
-            --save-prefix checkpoints/{dataset}/faster_rcnn/
+            --save-prefix {cfg.checkpoints_folder}/{dataset}/faster_rcnn/
             --epochs {epochs}
             --lr 0.001
             --lr-decay 0.1
@@ -124,7 +124,7 @@ def main():
             train_ssd512(epochs, dataset)
         elif args.model == 'frcnn':
             train_frcnn(epochs, dataset)
-        elif args.model == 'yolo': 
+        elif args.model == 'yolo':
             train_yolo3(epochs, dataset)
         elif args.model == 'all':
             train_ssd300(epochs, dataset)
