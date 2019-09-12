@@ -97,7 +97,8 @@ def main():
 
     extra_args = {
         'assets_folder': cfg.assets_folder,
-        'parts_folder': cfg.parts_folder
+        'parts_folder': cfg.parts_folder,
+        'output_folder': pjoin(cfg.project_folder, 'temp')
     }
     for key, val in extra_args.items():
         command += f' --{key} {val}'

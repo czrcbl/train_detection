@@ -137,7 +137,7 @@ def main():
     args = parse_args()
     # mode = 'small'
 
-    root_dir = args.assets_folder
+    root_dir = args.output_folder
     output_folder = pjoin(root_dir, f'rendered_images/{args.mode}')
 
     if not os.path.exists(output_folder):

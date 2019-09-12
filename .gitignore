@@ -8,12 +8,14 @@ data/assets/*
 outputs/*
 backups/*
 test_nbs/*
+temp/*
 
 !data/datasets/DATASETS.md
 !data/checkpoints/CHECKPOINTS.md
 !data/gen_data/GEN_DATA.md
 !data/assets/ASSETS.md
 
+*.debris
 .vscode/*
 
 # Created by https://www.gitignore.io/api/python
