@@ -1,6 +1,10 @@
 misc/*
 old/*
-data/*
+data/datasets/*
+data/datasets/*
+data/checkpoints/*
+data/gen_data/*
+data/assets/*
 outputs/*
 backups/*
 test_nbs/*
