@@ -1,6 +1,6 @@
 from gluoncv.utils.metrics.voc_detection import VOC07MApMetric
 
-from traindet.utils import RealDataset, SynthDataset
+from traindet.utils import RealDataset, SynthDataset, RealGraspDataset
 
 
 def get_dataset(dataset, mixup=False):
@@ -17,6 +17,9 @@ def get_dataset(dataset, mixup=False):
     elif dataset.lower() == 'synth02':
         train_dataset = SynthDataset(root='datasets/synth02', mode='all')
         val_dataset = RealDataset(mode='all')
+    elif dataset.lower() == 'real_with_grasp':
+        train_dataset = RealGraspDataset(mode='train')
+        val_dataset = RealGraspDataset(mode='test')
     else:
         raise NotImplementedError('Dataset: {} not implemented.'.format(dataset))
     val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)

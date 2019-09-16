@@ -117,6 +117,33 @@ class RealDataset(gdata.Dataset):
         return nd.array(img), np.array(ntgt)
 
 
+class RealGraspDataset(gdata.Dataset):
+    def __init__(self, root=cfg.real_grasp_dataset_folder, mode='train'):
+        super(RealGraspDataset, self).__init__()
+        self.classes = cfg.classes_grasp
+        if mode == 'train':
+            files = ['train.json']
+        elif mode == 'test':
+            files = ['test.json']
+        elif mode == 'all':
+            files = ['train.json', 'test.json']
+        else:
+            raise ValueError(f'Invalid mode {mode}.')
+        data = []
+        for fn in files:
+            with open(pjoin(root, fn), 'r') as f:
+                data.extend(json.load(f))
+
+        self.fns = [pjoin(root, d['img']) for d in data]
+        self.targets = load_targets([pjoin(root, d['label']) for d in data])
+    
+    def __len__(self):
+        return len(self.fns)
+
+    def __getitem__(self, idx):
+        return process_examples(self.fns[idx], self.targets[idx])
+
+
 class SynthDataset(gdata.Dataset):
     def __init__(self, root=cfg.synth_dataset_folder, mode='train'):
         super(SynthDataset, self).__init__()

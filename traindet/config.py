@@ -17,6 +17,7 @@ backgrounds_folder = pjoin(assets_folder, 'backgrounds')
 
 # Datasets
 real_dataset_folder = pjoin(dataset_folder, 'real')
+real_grasp_dataset_folder = pjoin(dataset_folder, 'real_with_grasp')
 synth_dataset_folder = pjoin(dataset_folder, 'synth')
 
 used_model_names = ['ssd300', 'ssd512', 'yolo416', 'frcnn'] # For compatibility
@@ -42,6 +43,19 @@ formated_classes = [
     'Part 01', 
     'Part 02', 
     'Part 03']
+
+
+classes_grasp = [
+    'tray',
+    'dosing_nozzle',
+    'button_pad',
+    'part1',
+    'part2',
+    'part3',
+    'grasping_tag',
+    'grasping_cylinder',
+    'grasping_cuboid']
+
 
 
 dataset_names = [
