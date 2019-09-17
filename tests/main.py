@@ -1,9 +1,12 @@
+import sys
+import os
+path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if path not in sys.path:
+    sys.path.insert(0, path)
 import unittest
-
 from traindet import config as cfg
 from traindet.train_utils import get_dataset
 
-# from traindet.utils import RealDataset, 
 
 class TestDatasets(unittest.TestCase):
 
