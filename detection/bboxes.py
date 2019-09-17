@@ -1,13 +1,6 @@
 import cv2
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
-from traindet.train_utils import get_dataset
-from traindet.utils import load_predictions
-from traindet.config import classes
-
-
-CMAP = matplotlib.cm.get_cmap('Spectral')
 
 
 def center_width_height2xyxy(data):
@@ -36,9 +29,9 @@ def xyxy2center_width_height(data):
     return np.array(out)
 
 
-class Bbox:
+class Bbox(object):
 
-    def __init__(self, x1, y1, x2, y2, class_id, score, parent=None, class_name=None):
+    def __init__(self, x1, y1, x2, y2, class_id, score, class_name, parent=None, ):
         self.x1 = x1 # left top
         self.y1 = y1 # left top
         self.x2 = x2 # right bottom
@@ -46,10 +39,7 @@ class Bbox:
         self.class_id = int(class_id)
         self.score = score
         self.parent = parent
-        if class_name is None:
-            self.class_name = classes[int(class_id)]
-        else:
-            self.class_name = class_name
+        self.class_name = class_name
         
     def __repr__(self):
         return 'Bbox({:.2f}, {:.2f}, {:.2f}, {:.2f}, class_id={}, score={:.2f}, class_name=\'{}\')'.format(self.x1, self.y1, self.x2, self.y2, self.class_id, self.score, self.class_name)
@@ -63,11 +53,12 @@ class Bbox:
     def center_width_height(self):
         return xyxy2center_width_height(self.xyxy())
 
-    def cropped_image(self, border=0.0):
+    def cropped_image(self, img=None, border=0.0):
         """Return the original image cropped on the bounding box limits
         border: percentage of the bounding box width and height to enlager the bbox
         """
-        img = self.parent.img
+        if img is None:
+            img = self.parent.img
         h, w = img.shape[:2]
         
         # percentage of bbox dimensions
@@ -91,30 +82,33 @@ class Bbox:
     def draw(self, img=None):
         if img is None:
             img = self.parent.img
-        color = CMAP(self.class_id/(len(classes) - 1))[:3]
-        color = [255 * c for c in color]
+        # height, width = img.shape[:2]
+        color = plt.get_cmap('hsv')(self.class_id / len(self.parent.classes))
+        color = [x * 255 for x in color]
         thickness = 1 + int(img.shape[1]/300)
-        rimg = cv2.rectangle(
-            img, (self.x1, self.y1), (self.x2, self.y2), color, thickness=thickness)
-        cv2.putText(
-            rimg, self.class_name, (self.x1, self.y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        rimg = cv2.rectangle(img, (int(self.x1), int(self.y1)), (int(self.x2), int(self.y2)), color, thickness)
+        text = '{} {:d}%'.format(self.class_name, int(self.score * 100))
+        cv2.putText(rimg, text, (int(self.x1), int(self.y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        if isinstance(rimg, cv2.UMat):
+            rimg = rimg.get()
         return rimg
 
 
 class BboxList(list):
 
-    def __init__(self, ids=None, scores=None, bboxes=None, th=0.0, img=None):
+    def __init__(self, ids, scores, bboxes, class_names, th=0.0, img=None):
         super(BboxList, self).__init__()
         self.img = img
         self.th = th
-        if ids is not None:
-            self.initialize(ids, scores, bboxes)
+        self.classes = class_names
+        self.initialize(ids, scores, bboxes)
 
     def initialize(self, ids, scores, bboxes):
         out_bboxes = []
         for _id, score, bbox in zip(ids, scores, bboxes):
+            _id = int(_id)
             if score > self.th: 
-                out_bboxes.append(Bbox(bbox[0], bbox[1], bbox[2], bbox[3], _id, score, parent=self))
+                out_bboxes.append(Bbox(bbox[0], bbox[1], bbox[2], bbox[3], _id, score, self.classes[_id], parent=self))
         out_bboxes = sorted(out_bboxes, key=(lambda x: x.score), reverse=True)
         self.extend(out_bboxes)
 

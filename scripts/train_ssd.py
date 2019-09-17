@@ -1,4 +1,5 @@
 """Train SSD"""
+import _fix_path
 import argparse
 import os
 import logging

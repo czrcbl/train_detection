@@ -1,3 +1,4 @@
+import _fix_path
 import argparse
 import pickle
 import os

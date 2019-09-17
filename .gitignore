@@ -5,6 +5,7 @@ data/datasets/*
 data/checkpoints/*
 data/gen_data/*
 data/assets/*
+data/videos/*
 outputs/*
 backups/*
 test_nbs/*

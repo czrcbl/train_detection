@@ -1,12 +1,33 @@
-import cv2
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
+from detection import Detector
 from traindet.train_utils import get_dataset
-from traindet.utils import load_predictions
-from traindet.config import classes
+import time
+import numpy as np
+_, val_ds, _ = get_dataset('real')
 
-from bboxes.main import BboxList, Bbox
+det = Detector(model='ssd512_mobile', dataset='real', ctx='gpu')
+
+times = []
+for x in val_ds:
+    tic = time.time()
+    img = x[0].asnumpy()
+    bboxes, rimg = det.detect(img)
+    times.append(time.time() - tic)
+
+m_time = np.mean(times)
+print(m_time)
+print(1/m_time)
+
+
+
+# import cv2
+# import numpy as np
+# import matplotlib
+# import matplotlib.pyplot as plt
+# from traindet.train_utils import get_dataset
+# from traindet.utils import load_predictions
+# from traindet.config import classes
+
+# from bboxes.main import BboxList, Bbox
 
 # _, val_ds, _ = get_dataset('real')
 # img = val_ds[0][0].asnumpy().astype('int')
@@ -57,12 +78,52 @@ from bboxes.main import BboxList, Bbox
 # plt.imshow(rimg)
 # plt.show()
 
-import time
-from bboxes.window import VideoWindow
+# import time
+# from bboxes.window import VideoWindow
 
-_, val_ds, _ = get_dataset('real')
-vw = VideoWindow()
-for x in val_ds:
-    img = x[0].asnumpy().astype('int')
-    vw.send_frame(img)
-    time.sleep(0.5)
+# from traindet.train_utils import get_dataset
+# from detection.window import VideoOutput
+# import time
+# # import os
+# # os.environ['OPENCV_IO_MAX_IMAGE_PIXELS']=str(2**64)
+# import cv2
+# _, val_ds, _ = get_dataset('real')
+# vo = VideoOutput('Model')
+# for x in val_ds:
+#     img = x[0].asnumpy().astype('int')
+#     vo.send_frame(img)
+#     time.sleep(0.5)
+# for x in val_ds:
+#     img = x[0].asnumpy()/255
+#     print(img)
+#     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+#     cv2.imshow('Model', img)
+#     cv2.waitKey(1)
+#     time.sleep(1)
+
+# cv2.destroyAllWindows()
+
+# import matplotlib.pyplot as plt
+# import cv2
+# from detection import Detector
+# from traindet.train_utils import get_dataset
+# from traindet.utils import load_predictions
+
+# _, val_ds, _ = get_dataset('real')
+# img = val_ds[0][0].asnumpy()
+# img.shape
+
+
+# _, val_ds, _ = get_dataset('real')
+# img = val_ds[0][0].asnumpy().astype('int')
+# preds = load_predictions('real')
+# pred = preds['ssd300']['preds'][0]
+# rimg = cv2.resize(img, dsize=(300, 300), interpolation=cv2.INTER_NEAREST)
+
+# from gluoncv.utils.viz import cv_plot_bbox
+# img = cv_plot_bbox(rimg, pred[:, 0:4], scores=pred[:, 5], labels=pred[:, 4], thresh=0.5,
+#                  class_names=val_ds.classes, colors=None,
+#                  absolute_coordinates=True, scale=1.0)
+
+# plt.imshow(img)
+# plt.show()

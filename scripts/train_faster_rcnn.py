@@ -1,4 +1,5 @@
 """Train Faster-RCNN end to end."""
+import _fix_path
 import sys
 sys.path.insert(0, '../')
 import argparse

@@ -1,4 +1,4 @@
-import _path
+import _fix_path
 import subprocess
 import argparse
 import os

@@ -1,4 +1,5 @@
 """Train YOLOv3 with random shapes."""
+import _fix_path
 import argparse
 import os
 import logging
