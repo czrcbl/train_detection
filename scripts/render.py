@@ -75,8 +75,8 @@ def parse_args():
     parser.add_argument('--dataset-name', 
         help='The name of the output dataset.')
     parser.add_argument('--seed', default=233)
-    parser.add_argument('--train_fraq', default=0.7)
-    parser.add_argument('--output_folder', default=pjoin(cfg.project_folder, 'temp'))
+    parser.add_argument('--train-fraq', default=0.7)
+    parser.add_argument('--output-folder', default=pjoin(cfg.project_folder, 'temp'))
     args = parser.parse_args()
 
     assert (args.out_dataset_folder not in os.listdir(cfg.dataset_folder)),\
@@ -106,8 +106,8 @@ def main():
 
     print(command.split())
     subprocess.call(command.split())
-
-    add_background(pjoin(output_folder, 'rendered_images'), pjoin('temp', args.out_dataset_folder), args)
+    # if not os.path.isdir(args.outp)
+    add_background(pjoin(args.output_folder, 'rendered_images'), pjoin('temp', args.out_dataset_folder), args)
     split_dataset(args)
 
 if __name__ == '__main__':

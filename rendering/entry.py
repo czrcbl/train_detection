@@ -132,9 +132,9 @@ def parse_args():
     return args
 
 
-def deterministic_render():
+def deterministic_render(args):
 
-    args = parse_args()
+    # args = parse_args()
     root_dir = args.output_folder
     output_folder = pjoin(root_dir, f'rendered_images/{args.mode}')
 
@@ -213,9 +213,9 @@ def deterministic_render():
                         i += 1
 
 
-def random_render():
+def random_render(args):
     """Render the object in random positions.""""
-    args = parse_args()
+    # args = parse_args()
     root_dir = args.output_folder
     output_folder = pjoin(root_dir, f'rendered_images/test_random')
 
@@ -297,7 +297,10 @@ def main():
     args = parse_args()
 
     if args.mode = 'random':
-        random_render()
+        random_render(args)
+    elif args.mode = 'deterministic':
+        deterministic_render(args)
+
 
 
 

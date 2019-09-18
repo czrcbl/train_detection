@@ -1,19 +1,33 @@
 # Object Detection for Additive Manufactured Parts
 
-## Intro
+## Detection
 
-This repository contains the code necessry to reproduce the results obtained on
+`detection` package consists in a wrapper around the trained models and provides some utilities related to the manipulation and visualization of bounding boxes. Detection is self contained and does not depend on the other packages in this repository. The only dependence are the models stored in `data/checkpoints` folder.
+This package is supposed to work with python2 and python3. 
+
+<!--
+Download models from the [Dropbox Folder](https://www.dropbox.com/sh/1v53pmryf6jrig9/AAAhRwnVNLHnF3vs_eJttB2sa?dl=0). Place them on models folder.
+-->
+### Instructions
+Clone the repository and install with:
+
+``` bash
+sudo pip install -e .
+```
+
+## Other packages
+
+The rest of this repository contains the code necessary to reproduce the results obtained on
 the article [to be published](article_link).
 
 ## Structure
 
-* Folder `traindet` has the core utlities from training and evaluating
+* Folder `traindet` has the core utilities from training and evaluating
 the models.
 * Folder `rendering` has all the code that is supposed to be run through blender.
-* Folder `scripts` has the scripts for launching the networks training and also
-for starting the rendering of synthetic images.
-* All the data to train the models should be placed on the  `data` folder.
-All generated data is also placed in this folder.
+* Folder `scripts` has the scripts for launching the networks training, starting the rendering of synthetic images and producing some visualizations.
+* All the data to train the models should be placed on the `data` folder.
+All generated data and trained models are also placed in this folder.
 
 ## Reproducing
 
@@ -29,7 +43,7 @@ training
 Then, run:
 
 ``` bash
-python scripts/make_predictions.py --modeel all --dataset all
+python scripts/make_predictions.py --model all --dataset all
 ```
 
 To apply the models to the validation set and store the results on the `data/gen_data`

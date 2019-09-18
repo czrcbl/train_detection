@@ -85,12 +85,15 @@ class Bbox(object):
         # height, width = img.shape[:2]
         color = plt.get_cmap('hsv')(self.class_id / len(self.parent.classes))
         color = [x * 255 for x in color]
+        # print(self.class_name, color)
         thickness = 1 + int(img.shape[1]/300)
+        # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         rimg = cv2.rectangle(img, (int(self.x1), int(self.y1)), (int(self.x2), int(self.y2)), color, thickness)
         text = '{} {:d}%'.format(self.class_name, int(self.score * 100))
         cv2.putText(rimg, text, (int(self.x1), int(self.y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
         if isinstance(rimg, cv2.UMat):
             rimg = rimg.get()
+        # rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
         return rimg
 
 
