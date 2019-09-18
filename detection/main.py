@@ -1,5 +1,6 @@
 from __future__ import division, print_function, absolute_import
 
+import os
 from os.path import join as pjoin
 import numpy as np
 
@@ -21,10 +22,40 @@ def filter_predictions(ids, scores, bboxes, threshold=0.0):
     fbboxes = bboxes.squeeze().asnumpy()[idx]
     return fids, fscores, fbboxes
 
+# (width, height) 
+trans_map = {
+    'ssd512': transforms.SSDDefaultTransform(512, 512),
+    'ssd300': transforms.SSDDefaultTransform(300, 300),
+    'yolo:': 0
+}
+
+
+def list_models():
+    
+    data = {}
+    base_dir = cfg.checkpoints_folder
+    datasets = sorted(os.listdir(base_dir))
+    for ds in datasets:
+        models = os.listdir(pjoin(base_dir, ds))
+        data[ds] = models
+
+    return data
+
+def load_model(model, dataset):
+    pass
+
 
 class Detector:
+    model_data = list_models()
     def __init__(self, model='ssd512', dataset='real', ctx='cpu'):
+
+        data = Detector.model_data
+        if dataset not in data.keys():
+            raise ValueError('Dataset {} does not exist, avaliable datasets:{}'.format(dataset, data.keys()))
+        elif model not in data[dataset]:
+            raise ValueError('Model {} does not exist for dataset {}, avaliable models:{}'.format(mode, dataset, data.keys()))
         dataset_root = pjoin(cfg.dataset_folder, dataset)
+        
         with open(pjoin(dataset_root, 'classes.txt'), 'r') as f:
             classes = [line.strip() for line in f.readlines()]
             classes = [line for line in classes if line]
@@ -72,6 +103,21 @@ class Detector:
         net.reset_class(classes=classes)
         net.load_parameters(parameters_path, ctx=ctx)
         self.net = net
+
+
+    @classmethod
+    def list_datasets(cls):
+        return cls.model_data.keys()
+
+
+    @classmethod
+    def list_models(cls, dataset):
+        try:
+            models = cls.model_data[dataset]
+        except KeyError:
+            raise ValueError('Dataset {} does not exist, avaliable datasets {}'.format(dataset, cls.model_data.keys()))
+        return models
+
 
     def detect(self, img, threshold=0.5, mantain_sacale=True):
         """ 
