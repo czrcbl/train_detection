@@ -82,7 +82,7 @@ class Bbox(object):
     def draw(self, img=None):
         if img is None:
             img = self.parent.img
-        # height, width = img.shape[:2]
+        height, width = img.shape[:2]
         color = plt.get_cmap('hsv')(self.class_id / len(self.parent.classes))
         color = [x * 255 for x in color]
         # print(self.class_name, color)
@@ -90,7 +90,10 @@ class Bbox(object):
         # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         rimg = cv2.rectangle(img, (int(self.x1), int(self.y1)), (int(self.x2), int(self.y2)), color, thickness)
         text = '{} {:d}%'.format(self.class_name, int(self.score * 100))
-        cv2.putText(rimg, text, (int(self.x1), int(self.y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        font_scale = 0.5/600 * width
+        thickness = int(2/600 * width)
+        vert = 10/1080 * height
+        cv2.putText(rimg, text, (int(self.x1), int(self.y1 - vert)), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
         if isinstance(rimg, cv2.UMat):
             rimg = rimg.get()
         # rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)

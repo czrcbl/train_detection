@@ -34,7 +34,7 @@ def list_models():
     
     data = {}
     base_dir = cfg.checkpoints_folder
-    datasets = sorted(os.listdir(base_dir))
+    datasets = [x for x in sorted(os.listdir(base_dir)) if os.path.isdir(pjoin(base_dir, x))]
     for ds in datasets:
         models = os.listdir(pjoin(base_dir, ds))
         data[ds] = models
@@ -48,12 +48,11 @@ def load_model(model, dataset):
 class Detector:
     model_data = list_models()
     def __init__(self, model='ssd512', dataset='real', ctx='cpu'):
-
         data = Detector.model_data
         if dataset not in data.keys():
             raise ValueError('Dataset {} does not exist, avaliable datasets:{}'.format(dataset, data.keys()))
         elif model not in data[dataset]:
-            raise ValueError('Model {} does not exist for dataset {}, avaliable models:{}'.format(mode, dataset, data.keys()))
+            raise ValueError('Model {} does not exist for dataset {}, avaliable models:{}'.format(model, dataset, data.keys()))
         dataset_root = pjoin(cfg.dataset_folder, dataset)
         
         with open(pjoin(dataset_root, 'classes.txt'), 'r') as f:
