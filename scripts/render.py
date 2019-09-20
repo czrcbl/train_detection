@@ -44,7 +44,7 @@ def split_dataset(args):
 
     seed = args.seed
     train_fraq = args.train_fraq
-    dataset_folder = pjoin(cfg.dataset_folder, args.out_dataset_folder)
+    dataset_folder = pjoin(args.output_folder, args.dataset_name)
     random.seed(seed)
     data = []
     for folder in sorted(os.listdir(dataset_folder)):
@@ -77,10 +77,11 @@ def parse_args():
     parser.add_argument('--seed', default=233)
     parser.add_argument('--train-fraq', default=0.7)
     parser.add_argument('--output-folder', default=pjoin(cfg.project_folder, 'temp'))
+    parser.add_argument('--nviews', default=0, help='Number of views per object on random mode')
     args = parser.parse_args()
 
-    assert (args.out_dataset_folder not in os.listdir(cfg.dataset_folder)),\
-        'Dataset Output Folder already exists.'
+    # assert (args.out_dataset_folder not in os.listdir(cfg.dataset_folder)),\
+    #     'Dataset Output Folder already exists.'
     
     return args
 
@@ -107,7 +108,7 @@ def main():
     print(command.split())
     subprocess.call(command.split())
     # if not os.path.isdir(args.outp)
-    add_background(pjoin(args.output_folder, 'rendered_images'), pjoin('temp', args.out_dataset_folder), args)
+    add_background(pjoin(args.output_folder, 'rendered_images'), pjoin(args.output_folder, args.dataset_name), args)
     split_dataset(args)
 
 if __name__ == '__main__':

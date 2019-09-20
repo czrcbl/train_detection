@@ -6,12 +6,24 @@ from matplotlib.image import imread
 import matplotlib.pyplot as plt
 
 
-# img = imread(pjoin(cfg.dataset_folder, 'real/test/a0rc.png'))
+img = imread(pjoin(cfg.dataset_folder, 'real/test/a0rc.png'))
+img = (255*img).astype('uint8')
+# dataset
+# img = imread(pjoin(cfg.dataset_folder, 'real_with_grasp/imgs/0du6.png'))
 # det = Detector(model='ssd512', dataset='real_with_grasp')
-# bboxes, _ = det.detect(img)
-# dimg = bboxes.draw(img)
-# plt.imshow(dimg)
-# plt.show()
+det = Detector(model='ssd512', dataset='real')
+bboxes, _ = det.detect(img)
+dimg = bboxes.draw(img)
+plt.figure()
+plt.imshow(dimg)
+plt.figure()
+# plt.imshow(bboxes.img.astype('uint8'))
+plt.imshow(img)
+
+mimg = bboxes[0].mask_image(img)
+plt.figure()
+plt.imshow(mimg.astype('uint8'))
+plt.show()
 
 # det = Detector(model='ssd512', dataset='real_with_grasp')
 # examples_dir = pjoin(cfg.data_folder, 'assets/printer_images')
@@ -27,14 +39,14 @@ import matplotlib.pyplot as plt
 # plt.show()
 
 
-det = Detector(model='ssd512', dataset='real_with_grasp')
-examples_dir = pjoin(cfg.data_folder, 'assets/printer_images')
-file_paths = [pjoin(examples_dir, x) for x in sorted(os.listdir(examples_dir))]
-for img_path in file_paths:
-    img = imread(img_path)
-    bboxes, _ = det.detect(img, threshold=0.5)
-    dimg = bboxes.draw(img)
-    plt.figure()
-    plt.imshow(dimg)
+# det = Detector(model='ssd512', dataset='real_with_grasp')
+# examples_dir = pjoin(cfg.data_folder, 'assets/printer_images')
+# file_paths = [pjoin(examples_dir, x) for x in sorted(os.listdir(examples_dir))]
+# for img_path in file_paths:
+#     img = imread(img_path)
+#     bboxes, _ = det.detect(img, threshold=0.5)
+#     dimg = bboxes.draw(img)
+#     plt.figure()
+#     plt.imshow(dimg)
 
-plt.show()
+# plt.show()

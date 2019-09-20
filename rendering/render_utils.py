@@ -1,6 +1,11 @@
+import sys
+import os
+path = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
+if path not in sys.path:
+    sys.path.insert(0, path)
 from mathutils import Vector
 import math
-from rendering import render_config as rcfg
+import render_config as rcfg
 
 def get_params(part, mode='test'):
     

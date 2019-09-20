@@ -54,7 +54,6 @@ class Detector:
         elif model not in data[dataset]:
             raise ValueError('Model {} does not exist for dataset {}, avaliable models:{}'.format(model, dataset, data.keys()))
         dataset_root = pjoin(cfg.dataset_folder, dataset)
-        
         with open(pjoin(dataset_root, 'classes.txt'), 'r') as f:
             classes = [line.strip() for line in f.readlines()]
             classes = [line for line in classes if line]

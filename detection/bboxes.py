@@ -1,3 +1,4 @@
+from __future__ import division, print_function, absolute_import
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -78,26 +79,42 @@ class Bbox(object):
 
         return cropped
 
+    def mask_image(self, img=None):
+
+        if img is None:
+            img = self.parent.img
+        
+        if len(img.shape) == 2:
+            h, w = img.shape
+            out = np.zeros((h, w))
+        elif len(img.shape) == 3:
+            h, w, c = img.shape
+            out = np.zeros((h, w, c))
+
+        bbh, bbw = self.y2 - self.y1, self.x2 - self.x1
+        i1 = int(np.max([0, self.y1]))
+        i2 = int(np.min([h, self.y2]))
+        j1 = int(np.max([0, self.x1]))
+        j2 = int(np.min([w, self.x2]))
+        out[i1: i2, j1: j2] = img[i1: i2, j1: j2]
+        # out = img[i1: i2, j1: j2, :]
+        return out
     
     def draw(self, img=None):
         if img is None:
             img = self.parent.img
+        img = np.copy(img)
         height, width = img.shape[:2]
         color = plt.get_cmap('hsv')(self.class_id / len(self.parent.classes))
         color = [x * 255 for x in color]
-        # print(self.class_name, color)
         thickness = 1 + int(img.shape[1]/300)
-        # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        rimg = cv2.rectangle(img, (int(self.x1), int(self.y1)), (int(self.x2), int(self.y2)), color, thickness)
+        cv2.rectangle(img, (int(self.x1), int(self.y1)), (int(self.x2), int(self.y2)), color, thickness)
         text = '{} {:d}%'.format(self.class_name, int(self.score * 100))
         font_scale = 0.5/600 * width
         thickness = int(2/600 * width)
         vert = 10/1080 * height
-        cv2.putText(rimg, text, (int(self.x1), int(self.y1 - vert)), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
-        if isinstance(rimg, cv2.UMat):
-            rimg = rimg.get()
-        # rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
-        return rimg
+        cv2.putText(img, text, (int(self.x1), int(self.y1 - vert)), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
+        return img
 
 
 class BboxList(list):
@@ -128,12 +145,12 @@ class BboxList(list):
             bboxes.append(bbox.xyxy())
         return np.array(ids), np.array(scores), np.array(bboxes)
 
-
     def draw(self, img=None):
         if img is None:
             img = self.img
 
-        for bbox in self:
+        # inverse order to focos on higher score boxes
+        for bbox in self[::-1]:
             img = bbox.draw(img)
 
         return img

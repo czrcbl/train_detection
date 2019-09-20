@@ -1,5 +1,8 @@
-import os
 import sys
+import os
+path = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
+if path not in sys.path:
+    sys.path.insert(0, path)
 import argparse
 import bpy
 import math
@@ -8,9 +11,18 @@ import mathutils
 from os.path import join as pjoin
 import random
 
-from rendering.render_utils import Box, camera_view_bounds_2d, get_params
-from rendering.render_config import parts
-from rendering import render_config as rcfg
+print(sys.path)
+# from rendering.render_utils import Box, camera_view_bounds_2d, get_params
+# from rendering.render_config import parts
+# from rendering import render_config as rcfg
+
+# from .render_utils import Box, camera_view_bounds_2d, get_params
+# from .render_config import parts
+# from . import render_config as rcfg
+
+from render_utils import Box, camera_view_bounds_2d, get_params
+from render_config import parts
+import render_config as rcfg
 
 
 class ArgStore:
@@ -123,13 +135,23 @@ def render_scene_bb(scene, cam_ob, obj, obj_number, prefix):
         file.write("%i %f %f %f %f\n" % tuple(coords))
 
 
-def parse_args():
-    
-    argv = sys.argv
-    argv = argv[argv.index("--") + 1:]
-    args = ArgStore(argv)
+def listdir(pdir):
+    return [pjoin(pdir, x) for x in os.listdir(pdir)]
 
-    return args
+
+def add_texture(texture_path, obj):
+    mat = bpy.data.materials.new(name='texture')
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
+    texImage.image = bpy.data.images.load(texture_path)
+    mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+
+    # Assign it to object
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
 
 
 def deterministic_render(args):
@@ -214,28 +236,29 @@ def deterministic_render(args):
 
 
 def random_render(args):
-    """Render the object in random positions.""""
-    # args = parse_args()
+    """Render the object in random positions."""
+
     root_dir = args.output_folder
-    output_folder = pjoin(root_dir, f'rendered_images/test_random')
+    output_folder = pjoin(root_dir, f'rendered_images')
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
+    textures = listdir(pjoin(args.assets_folder, 'textures'))
+    texture = textures[0]
     random.seed(args.seed)
 
-    n_views = 10
+    # n_views = 10
     params_range = {
-        'energy': (10e5, 10e6),
+        'energy': (5*10e5, 10e6),
         'rot_x': (0, 2 * math.pi),
         'rot_y': (0, 2 * math.pi),
         'rot_z': (0, 2 * math.pi),
-        'distances': (300, 2000),
+        'distance': (150, 2000),
         'lamp_r': (300, 1000)
     }
 
-    lamp = None
-
+##########################################
 
     prefs = bpy.context.preferences
     cuda_devices, opencl_devices = bpy.context.preferences.addons['cycles'].preferences.get_devices()
@@ -255,12 +278,14 @@ def random_render(args):
         print(f'Activating {device.name}')
         device.use = True
 
+ ##########################################
+
     for obj_number, part in enumerate(parts):
         
         clear()
         name = part['name']
         obj = load_stl(pjoin(args.parts_folder, f'{name}.stl'))
-
+        add_texture(texture, obj)
         cam = bpy.data.cameras.new("Camera")
         cam_ob = bpy.data.objects.new("Camera", cam)
         bpy.context.collection.objects.link(cam_ob)
@@ -268,11 +293,9 @@ def random_render(args):
         
         scene.camera.data.clip_end = 10000
 
-        distances, vert_angles, rot_angles = get_params(part, mode=args.mode)
-
         prefix = pjoin(output_folder, part['name'])
 
-        for i in range(n_views):
+        for i in range(int(args.nviews)):
             center_rotate_obj(obj, part['rot'])
             rot_x = random.uniform(*params_range['rot_x'])
             rot_y = random.uniform(*params_range['rot_y'])
@@ -281,24 +304,34 @@ def random_render(args):
             energy = random.uniform(*params_range['energy'])
 
             obj.rotation_euler = (rot_x, rot_y, rot_z)
-            cam_ob.location = (dist, y, z)
+            # cam_ob.location = (dist, y, z)
+            cam_ob.location = Vector((dist, 0, 0))
             pos = update_camera(cam_ob, Vector((0, 0, 0)))
             lx = random.uniform(*params_range['lamp_r'])
             ly = random.uniform(*params_range['lamp_r'])
             lz = random.uniform(*params_range['lamp_r'])
-            lamp = create_lamp(Vector((l_x, l_y, l_z)), energy)
+            lamp = create_lamp(Vector((lx, ly, lz)), energy)
 
             fprefix = pjoin(prefix, str(i))
             render_scene_bb(scene, cam_ob, obj, obj_number, fprefix)
 
 
+def parse_args():
+    
+    argv = sys.argv
+    argv = argv[argv.index("--") + 1:]
+    args = ArgStore(argv)
+
+    return args
+
+    
 def main():
 
     args = parse_args()
 
-    if args.mode = 'random':
+    if args.mode == 'random':
         random_render(args)
-    elif args.mode = 'deterministic':
+    elif args.mode == 'deterministic':
         deterministic_render(args)
 
 
