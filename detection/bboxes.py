@@ -100,7 +100,9 @@ class Bbox(object):
         # out = img[i1: i2, j1: j2, :]
         return out
     
+    
     def draw(self, img=None):
+        """Draw bbox on image, expect an int image"""
         if img is None:
             img = self.parent.img
         img = np.copy(img)

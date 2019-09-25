@@ -47,22 +47,23 @@ def load_model(model, dataset):
 
 class Detector:
     model_data = list_models()
-    def __init__(self, model='ssd512', dataset='real', ctx='cpu'):
+    def __init__(self, model='ssd512', dataset='real', ctx='cpu', classes=cfg.classes):
         data = Detector.model_data
         if dataset not in data.keys():
             raise ValueError('Dataset {} does not exist, avaliable datasets:{}'.format(dataset, data.keys()))
         elif model not in data[dataset]:
             raise ValueError('Model {} does not exist for dataset {}, avaliable models:{}'.format(model, dataset, data.keys()))
-        dataset_root = pjoin(cfg.dataset_folder, dataset)
-        with open(pjoin(dataset_root, 'classes.txt'), 'r') as f:
-            classes = [line.strip() for line in f.readlines()]
-            classes = [line for line in classes if line]
+        
+        #dataset_root = pjoin(cfg.dataset_folder, dataset)
+        # with open(pjoin(dataset_root, 'classes.txt'), 'r') as f:
+        #     classes = [line.strip() for line in f.readlines()]
+        #     classes = [line for line in classes if line]
+        
         self.classes = classes
         self.model = model
         if ctx == 'cpu':
             ctx = mx.cpu()
         elif ctx == 'gpu':
-            # raise NotImplementedError('gpu context is not implemented.')
             ctx = mx.gpu()
         else:
             raise ValueError('Invalid context.')

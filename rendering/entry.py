@@ -136,7 +136,7 @@ def render_scene_bb(scene, cam_ob, obj, obj_number, prefix):
 
 
 def listdir(pdir):
-    return [pjoin(pdir, x) for x in os.listdir(pdir)]
+    return [pjoin(pdir, x) for x in sorted(os.listdir(pdir))]
 
 
 def add_texture(texture_path, obj):
@@ -245,7 +245,6 @@ def random_render(args):
         os.makedirs(output_folder)
 
     textures = listdir(pjoin(args.assets_folder, 'textures'))
-    texture = textures[0]
     random.seed(args.seed)
 
     # n_views = 10
@@ -285,7 +284,6 @@ def random_render(args):
         clear()
         name = part['name']
         obj = load_stl(pjoin(args.parts_folder, f'{name}.stl'))
-        add_texture(texture, obj)
         cam = bpy.data.cameras.new("Camera")
         cam_ob = bpy.data.objects.new("Camera", cam)
         bpy.context.collection.objects.link(cam_ob)
@@ -296,6 +294,8 @@ def random_render(args):
         prefix = pjoin(output_folder, part['name'])
 
         for i in range(int(args.nviews)):
+            texture = random.choice(textures)
+            add_texture(texture, obj)
             center_rotate_obj(obj, part['rot'])
             rot_x = random.uniform(*params_range['rot_x'])
             rot_y = random.uniform(*params_range['rot_y'])
