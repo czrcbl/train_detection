@@ -142,16 +142,125 @@ def listdir(pdir):
 def add_texture(texture_path, obj):
     mat = bpy.data.materials.new(name='texture')
     mat.use_nodes = True
-    bsdf = mat.node_tree.nodes["Principled BSDF"]
-    texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
+    nodes = mat.node_tree.nodes
+    # bsdf = mat.node_tree.nodes["Principled BSDF"]
+    texImage = nodes.new('ShaderNodeTexImage')
     texImage.image = bpy.data.images.load(texture_path)
-    mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
-
+    # mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+    disp = nodes['Material Output'].inputs['Displacement']
+    mat.node_tree.links.new(disp, texImage.outputs['Color'])
     # Assign it to object
     if obj.data.materials:
         obj.data.materials[0] = mat
     else:
         obj.data.materials.append(mat)
+
+# def add_texture(img_path, obj):
+
+#     material_obj = bpy.data.materials.new('number_1_material')
+
+#     image_obj = bpy.data.images.load(img_path)
+
+#     texture_obj = bpy.data.textures.new('number_1_tex', type='IMAGE')
+#     texture_obj.image = image_obj
+
+#     texture_slot = material_obj.texture_slots.add()
+#     texture_slot.texture = texture_obj
+
+#     bpy.context.object.data.materials.append(material_obj)
+
+# def add_texture(texture_path, obj):
+#     mat = bpy.data.materials.new(name='texture')
+#     mat.use_nodes = True
+#     bsdf = mat.node_tree.nodes["Principled BSDF"]
+#     texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
+#     texImage.image = bpy.data.images.load(texture_path)
+#     mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+
+#     # Assign it to object
+#     if obj.data.materials:
+#         obj.data.materials[0] = mat
+#     else:
+#         obj.data.materials.append(mat)
+
+
+# def add_texture(texture_path, obj):
+#     mat = bpy.data.materials.new(name='texture')
+#     mat.use_nodes = True
+
+#     nodes = mat.node_tree.nodes
+#     links = mat.node_tree.links
+#     bsdf = nodes["Principled BSDF"]
+
+#     output  = nodes.new("ShaderNodeOutputMaterial")
+#     diffuse = nodes.new("ShaderNodeBsdfDiffuse")
+#     texture = nodes.new("ShaderNodeTexImage")
+#     uvmap   = nodes.new("ShaderNodeUVMap")
+
+#     # texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
+#     texture.image = bpy.data.images.load(texture_path)
+
+#     # mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+#     links.new(output.inputs['Surface'], diffuse.outputs['BSDF'])
+#     links.new(diffuse.inputs['Color'],   texture.outputs['Color'])
+#     links.new(texture.inputs['Vector'],    uvmap.outputs['UV'])
+    
+#     # Assign it to object
+#     if obj.data.materials:
+#         obj.data.materials[0] = mat
+#     else:
+#         obj.data.materials.append(mat)
+
+# def add_texture(texture_path, obj):
+
+#     mat_name = "MyMaterial"
+#     image_path = #...
+
+#     mat = (bpy.data.materials.get(mat_name) or
+#         bpy.data.materials.new(mat_name))
+
+#     mat.use_nodes = True
+#     nt = mat.node_tree
+#     nodes = nt.nodes
+#     links = nt.links
+
+#     # clear
+#     while(nodes): nodes.remove(nodes[0])
+
+#     output  = nodes.new("ShaderNodeOutputMaterial")
+#     diffuse = nodes.new("ShaderNodeBsdfDiffuse")
+#     texture = nodes.new("ShaderNodeTexImage")
+#     uvmap   = nodes.new("ShaderNodeUVMap")
+
+#     texture.image = bpy.data.images.load(image_path)
+#     uvmap.uv_map = "UV"
+
+#     links.new( output.inputs['Surface'], diffuse.outputs['BSDF'])
+#     links.new(diffuse.inputs['Color'],   texture.outputs['Color'])
+#     links.new(texture.inputs['Vector'],    uvmap.outputs['UV'])
+
+#     # distribute nodes along the x axis
+#     for index, node in enumerate((uvmap, texture, diffuse, output)):
+#         node.location.x = 200.0 * index
+
+
+#     ColoredGround = create_cycles_material('GroundCol')
+#     setMaterial(g_o, ColoredGround)
+
+# def create_cycles_material(name):
+
+#     mat = bpy.data.materials.new(name)
+#     mat.use_nodes = True
+#     nodes = mat.node_tree.nodes
+
+#     node = nodes['Diffuse BSDF']
+#     node.location = 600, 120
+#     #pass   # Some more node-engineering here
+#     return mat
+
+# def setMaterial(ob, mat):
+#     me = ob.data
+#     me.materials.append(mat)
 
 
 def deterministic_render(args):
