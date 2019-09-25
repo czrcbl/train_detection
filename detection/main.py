@@ -23,11 +23,11 @@ def filter_predictions(ids, scores, bboxes, threshold=0.0):
     return fids, fscores, fbboxes
 
 # (width, height) 
-trans_map = {
-    'ssd512': transforms.SSDDefaultTransform(512, 512),
-    'ssd300': transforms.SSDDefaultTransform(300, 300),
-    'yolo:': 0
-}
+# trans_map = {
+#     'ssd512': transforms.SSDDefaultTransform(512, 512),
+#     'ssd300': transforms.SSDDefaultTransform(300, 300),
+#     'yolo:': 0
+# }
 
 
 def list_models():
@@ -118,7 +118,7 @@ class Detector:
         return models
 
 
-    def detect(self, img, threshold=0.5, mantain_sacale=True):
+    def detect(self, img, threshold=0.5, mantain_scale=True):
         """ 
         Detects Bounding Boxes in a image.
         Inputs
@@ -153,7 +153,7 @@ class Detector:
         ids, scores, bboxes = self.net(timg.expand_dims(axis=0).as_in_context(self.ctx))
         fids, fscores, fbboxes = filter_predictions(ids, scores, bboxes, 
             threshold=threshold)
-        if mantain_sacale:
+        if mantain_scale:
             rep = np.repeat(
                 np.array([[width_ratio, height_ratio, width_ratio, height_ratio]]),
                 fbboxes.shape[0], axis=0)
