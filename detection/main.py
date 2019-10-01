@@ -47,7 +47,7 @@ def load_model(model, dataset):
 
 class Detector:
     model_data = list_models()
-    def __init__(self, model='ssd512', dataset='real', ctx='cpu', classes=cfg.classes):
+    def __init__(self, model='ssd512', dataset='real', ctx='cpu', classes=cfg.classes, model_path=None):
         data = Detector.model_data
         if dataset not in data.keys():
             raise ValueError('Dataset {} does not exist, avaliable datasets:{}'.format(dataset, data.keys()))
@@ -100,6 +100,8 @@ class Detector:
         net = model_zoo.get_model(model_name, ctx=ctx)
         net.initialize(force_reinit=True, ctx=ctx)
         net.reset_class(classes=classes)
+        if model_path is not None:
+            parameters_path = model_path
         net.load_parameters(parameters_path, ctx=ctx)
         self.net = net
 

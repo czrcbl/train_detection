@@ -1,0 +1,4 @@
+# Register test calls to some scripts
+
+# Test Rendering
+python scripts/render.py --mode random --dataset-name test_synth --nviews 5

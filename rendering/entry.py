@@ -147,8 +147,12 @@ def add_texture(texture_path, obj):
     texImage = nodes.new('ShaderNodeTexImage')
     texImage.image = bpy.data.images.load(texture_path)
     # mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
-    disp = nodes['Material Output'].inputs['Displacement']
-    mat.node_tree.links.new(disp, texImage.outputs['Color'])
+    # disp = nodes['Material Output'].inputs['Displacement']
+    # mat.node_tree.links.new(disp, texImage.outputs['Color'])
+
+    principled = nodes['Principled BSDF']
+
+    mat.node_tree.links.new(texImage.outputs[0], principled.inputs[0])
     # Assign it to object
     if obj.data.materials:
         obj.data.materials[0] = mat

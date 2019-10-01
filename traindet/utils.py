@@ -176,19 +176,19 @@ def load_model(model_name, dataset, ctx=mx.gpu()):
     if model_name == 'ssd300':
         net = model_zoo.get_model('ssd_300_vgg16_atrous_coco', pretrained=True, ctx=ctx, prefix='ssd0_')
         # net = model_zoo.get_model('ssd_300_vgg16_atrous_coco', pretrained=True, ctx=ctx)
-        params_path = pjoin(cfg.project_folder, f'checkpoints/{dataset}/ssd300/transfer_300_ssd_300_vgg16_atrous_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/ssd300/transfer_300_ssd_300_vgg16_atrous_coco_best.params')
         transform = transforms.presets.ssd.SSDDefaultValTransform(width=300, height=300)
     elif model_name == 'ssd512':
         net = model_zoo.get_model('ssd_512_resnet50_v1_coco', pretrained=True, ctx=ctx, prefix='ssd0_')
-        params_path = pjoin(cfg.project_folder, f'checkpoints/{dataset}/ssd512/transfer_512_ssd_512_resnet50_v1_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/ssd512/transfer_512_ssd_512_resnet50_v1_coco_best.params')
         transform = transforms.presets.ssd.SSDDefaultValTransform(width=512, height=512)
     elif model_name == 'yolo416':
         net = model_zoo.get_model('yolo3_darknet53_coco', pretrained=True, ctx=ctx)
-        params_path = pjoin(cfg.project_folder, f'checkpoints/{dataset}/yolo416/transfer_416_yolo3_darknet53_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/yolo416/transfer_416_yolo3_darknet53_coco_best.params')
         transform = transforms.presets.yolo.YOLO3DefaultValTransform(width=416, height=416)
     elif model_name == 'frcnn':
         net = model_zoo.get_model('faster_rcnn_resnet50_v1b_coco', pretrained=True, ctx=ctx)
-        params_path = pjoin(cfg.project_folder, f'checkpoints/{dataset}/faster_rcnn/transfer_faster_rcnn_resnet50_v1b_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/faster_rcnn/transfer_faster_rcnn_resnet50_v1b_coco_best.params')
         transform = transforms.presets.rcnn.FasterRCNNDefaultValTransform(short=600)
     else:
         raise NotImplementedError(f'Model {model_name} is not implemented.')

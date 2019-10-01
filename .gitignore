@@ -6,6 +6,7 @@ data/checkpoints/*
 data/gen_data/*
 data/assets/*
 data/videos/*
+data/grasping/*
 outputs/*
 backups/*
 test_nbs/*
