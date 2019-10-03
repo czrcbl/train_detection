@@ -46,11 +46,20 @@ class GraspOutput:
 
     def mask(self, bbox):
         """Return the an image of the grap image size, with zeros everywhere but inside the input bounding box."""
-        mq_img, mang_img, mwidth_img = bbox.mask_image([self.q_img, self.ang_img, self.width_img])
+        mq_img, mang_img, mwidth_img = [bbox.mask_image(x) for x in [self.q_img, self.ang_img, self.width_img]]
         return mq_img, mang_img, mwidth_img
     
     def get_best(self, bbox=None):
-        """Return the best draw on the region delimited by the input bounding box."""
+        """Return the best draw on the region delimited by the input bounding box.
+        
+        Output
+        ------
+        (px, py) : Center point of the grasp
+        bscore : Score of the grasp
+        bdist : Distance to the grap point, extracted form the depth image
+        bang : Angle of the grasp
+        bwidth : Width of the grasp
+        """
         if bbox is None:
             mq_img, mang_img, mwidth_img = self.q_img, self.ang_img, self.width_img
         else:
@@ -73,14 +82,12 @@ class GraspOutput:
         height, width = img.shape[:2]
         thickness = 1 + int(img.shape[1]/300)
         color = (255, 0, 0)
-        axis = (int(bwidth), 30)
-        print(p)
-        print(axis)
+        axis = (int(bwidth), int(height/40))
         cv2.ellipse(img, p, axis, bang * 180 / np.pi, 0.0, 360.0, color, thickness)
-        text = str(bdist)
-        font_scale = 0.5/600 * width
-        thickness = int(2/600 * width)
-        cv2.putText(img, text, p, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
+        # text = str(bdist)
+        # font_scale = 0.5/600 * width
+        # thickness = int(2/600 * width)
+        # cv2.putText(img, text, p, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
         return img
 
 
@@ -107,7 +114,7 @@ class GDetector:
     def detect(self, img):
         """Transforms and detect the grasps on the input depth image."""
         n_img = normalize(img)
-        t_img = torch.tensor(n_img)[None, None, :, :].to(self.device)
+        t_img = torch.tensor(n_img)[None, None, :, :].float().to(self.device)
 
         with torch.no_grad():
             pos_output, cos_output, sin_output, width_output = self.net(t_img)
