@@ -1,3 +1,4 @@
+"""Extracted from https://github.com/dougsm/ggcnn"""
 import torch.nn as nn
 import torch.nn.functional as F
 
