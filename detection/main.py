@@ -79,12 +79,12 @@ class Detector:
             parameters_path = pjoin(cfg.checkpoints_folder, dataset, 'ssd300/transfer_300_ssd_300_vgg16_atrous_coco_best.params')
             self.width, self.height = 300, 300
             self.transform = transforms.SSDDefaultTransform(self.width, self.height)
-        elif model.lower() == 'yolo':
+        elif (model.lower() == 'yolo') or (model.lower() == 'yolo416'):
             model_name = 'yolo3_darknet53_coco'
             parameters_path = pjoin(cfg.checkpoints_folder, dataset, 'yolo416/transfer_416_yolo3_darknet53_coco_best.params')
             self.width, self.height = 416, 416
             self.transform = transforms.SSDDefaultTransform(self.width, self.height)
-        elif model.lower() == 'frcnn':
+        elif (model.lower() == 'frcnn') or (model.lower() == 'faster_rcnn'):
             model_name = 'faster_rcnn_resnet50_v1b_coco'
             parameters_path = pjoin(cfg.checkpoints_folder, dataset, 'faster_rcnn/transfer_faster_rcnn_resnet50_v1b_coco_best.params')
             self.short = 600
@@ -95,7 +95,7 @@ class Detector:
             self.width, self.height = 512, 512
             self.transform = transforms.SSDDefaultTransform(self.width, self.height)
         else:
-            raise ValueError('Invalid model.')
+            raise ValueError('Invalid model `{}`.'.format(model.lower()))
 
         net = model_zoo.get_model(model_name, ctx=ctx)
         net.initialize(force_reinit=True, ctx=ctx)

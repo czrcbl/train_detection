@@ -26,5 +26,6 @@ classes_grasp = [
     'grasping_cylinder',
     'grasping_cuboid']
 
+
 if __name__ == '__main__':
     pass
