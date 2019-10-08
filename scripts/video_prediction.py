@@ -47,7 +47,7 @@ def parse_args():
     parser.add_argument('--output-path', help='Path to the output.', default='')
     parser.add_argument('--model', help='Model to use.')
     parser.add_argument('--dataset', help='Dataset in which the model was trained.')
-    parser.add_argument('--th', default=0.5, help='Detection threshold to use.')
+    parser.add_argument('--th', default=0.5, type=float, help='Detection threshold to use.')
     parser.add_argument('--ctx', default='gpu', help='Context (cpu or gpu), default: gpu.')
     args = parser.parse_args()
     return args

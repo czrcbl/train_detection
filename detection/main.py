@@ -137,19 +137,14 @@ class Detector:
         # TODO: improve this check to work in all cases
         if np.max(img) < 1.1:
             img = img * 255
-        trans = self.transform
+        
         in_height, in_width = img.shape[:2]
-        if hasattr(trans, '_short'):
-            #TODO: Fix to account for the _max_size param 
-            if in_height < in_width:
-                height_ratio = in_height / trans._short
-                width_ratio = height_ratio
-            else:
-                width_ratio = in_width * trans._short
-                height_ratio = width_ratio
-        else:
-            width_ratio = in_width / trans._width
-            height_ratio = in_height / trans._height
+
+        timg = self.transform(mx.nd.array(img))
+        t_height, t_width = timg.shape[1:]
+
+        width_ratio = in_width / t_width
+        height_ratio = in_height / t_height
 
         timg = self.transform(mx.nd.array(img))
         ids, scores, bboxes = self.net(timg.expand_dims(axis=0).as_in_context(self.ctx))
