@@ -103,13 +103,15 @@ def main():
                         help="Model to train.")
     parser.add_argument('--dataset', type=str, default='',
                         help="Dataset to use.")
+    parser.add_argument('--epochs', type=int, default=100,
+                        help='Number of epochs, default=100')
 
     args = parser.parse_args()
 
     if args.test:
         epochs = 1
     else:
-        epochs = None
+        epochs = args.epochs
 
     if args.dataset == 'all':
         datasets = cfg.dataset_names

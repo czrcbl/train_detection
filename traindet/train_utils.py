@@ -1,6 +1,9 @@
+from os.path import join as pjoin
+
 from gluoncv.utils.metrics.voc_detection import VOC07MApMetric, VOCMApMetric
 
 from traindet.utils import RealDataset, SynthDataset, RealGraspDataset
+from . import config as cfg
 
 
 def get_dataset(dataset, mixup=False):
@@ -16,6 +19,9 @@ def get_dataset(dataset, mixup=False):
         val_dataset = RealDataset(mode='all')
     elif dataset.lower() == 'synth02':
         train_dataset = SynthDataset(root='datasets/synth02', mode='all')
+        val_dataset = RealDataset(mode='all')
+    elif dataset.lower() == 'synth500':
+        train_dataset = SynthDataset(root=pjoin(cfg.dataset_folder, 'synth500'), mode='all')
         val_dataset = RealDataset(mode='all')
     elif dataset.lower() == 'real_with_grasp':
         train_dataset = RealGraspDataset(mode='train')
