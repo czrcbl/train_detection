@@ -8,12 +8,7 @@ This package is supposed to work with python2 and python3.
 <!--
 Download models from the [Dropbox Folder](https://www.dropbox.com/sh/1v53pmryf6jrig9/AAAhRwnVNLHnF3vs_eJttB2sa?dl=0). Place them on models folder.
 -->
-### Instructions
-Clone the repository and install with:
 
-``` bash
-sudo pip install -e .
-```
 
 ## Other packages
 
