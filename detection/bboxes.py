@@ -32,7 +32,7 @@ def xyxy2center_width_height(data):
 
 class Bbox(object):
 
-    def __init__(self, x1, y1, x2, y2, class_id, score, class_name, parent=None, ):
+    def __init__(self, x1, y1, x2, y2, class_id, score, class_name, parent=None):
         self.x1 = x1 # left top
         self.y1 = y1 # left top
         self.x2 = x2 # right bottom
@@ -45,21 +45,22 @@ class Bbox(object):
     def __repr__(self):
         return 'Bbox({:.2f}, {:.2f}, {:.2f}, {:.2f}, class_id={}, score={:.2f}, class_name=\'{}\')'.format(self.x1, self.y1, self.x2, self.y2, self.class_id, self.score, self.class_name)
 
+    @property
     def xyxy(self):
         return np.array([self.x1, self.y1, self.x2, self.y2])
 
+    @property
     def yxyx(self):
         return np.array([self.y1, self.x1, self.y2, self.x2])
 
+    @property
     def center_width_height(self):
-        return xyxy2center_width_height(self.xyxy())
+        return xyxy2center_width_height(self.xyxy)
 
-    def cropped_image(self, img=None, border=0.0):
+    def cropped_image(self, img, border=0.0):
         """Return the original image cropped on the bounding box limits
         border: percentage of the bounding box width and height to enlager the bbox
         """
-        if img is None:
-            img = self.parent.img
         h, w = img.shape[:2]
         
         # percentage of bbox dimensions
@@ -101,10 +102,8 @@ class Bbox(object):
         return out
     
     
-    def draw(self, img=None):
+    def draw(self, img):
         """Draw bbox on image, expect an int image"""
-        if img is None:
-            img = self.parent.img
         img = np.copy(img)
         height, width = img.shape[:2]
         color = plt.get_cmap('hsv')(self.class_id / len(self.parent.classes))
@@ -121,9 +120,8 @@ class Bbox(object):
 
 class BboxList(list):
 
-    def __init__(self, ids, scores, bboxes, class_names, th=0.0, img=None):
+    def __init__(self, ids, scores, bboxes, class_names, th=0.0):
         super(BboxList, self).__init__()
-        self.img = img
         self.th = th
         self.classes = class_names
         self.initialize(ids, scores, bboxes)
@@ -147,9 +145,7 @@ class BboxList(list):
             bboxes.append(bbox.xyxy())
         return np.array(ids), np.array(scores), np.array(bboxes)
 
-    def draw(self, img=None):
-        if img is None:
-            img = self.img
+    def draw(self, img):
 
         # inverse order to focos on higher score boxes
         for bbox in self[::-1]:

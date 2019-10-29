@@ -97,7 +97,7 @@ class Detector:
         else:
             raise ValueError('Invalid model `{}`.'.format(model.lower()))
 
-        net = model_zoo.get_model(model_name, ctx=ctx)
+        net = model_zoo.get_model(model_name, pretrained=False, ctx=ctx)
         net.initialize(force_reinit=True, ctx=ctx)
         net.reset_class(classes=classes)
         if model_path is not None:
