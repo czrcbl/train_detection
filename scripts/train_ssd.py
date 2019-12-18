@@ -21,8 +21,11 @@ from gluoncv.utils.metrics.voc_detection import VOC07MApMetric
 from gluoncv.utils.metrics.coco_detection import COCODetectionMetric
 from gluoncv.utils.metrics.accuracy import Accuracy
 
-from traindet.train_utils import get_dataset, save_params
+from traindet.train_utils import (get_dataset, save_params, validate_ssd, 
+    get_ssd_dataloader)
+from traindet.transforms import SSDTrainTransform, SSDValTransform
 from gluoncv import model_zoo
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train SSD networks.')
@@ -72,81 +75,14 @@ def parse_args():
                              'training time if validation is slow.')
     parser.add_argument('--seed', type=int, default=233,
                         help='Random seed to be fixed.')
+
+    parser.add_argument('--bilateral-kernel-size', default=None, type=int)
+    parser.add_argument('--sigma-vals', default=None, type=int)
+    parser.add_argument('--grayscale', action='store_true')
+
     args = parser.parse_args()
     return args
 
-# def get_dataset(dataset, args):
-#     if dataset.lower() == 'real':
-#         if args.dataset_root:
-#             train_dataset = RealDataset(root=args.dataset_root)
-#             val_dataset = RealDataset(root=args.dataset_root, train=False)
-#         else:
-#             train_dataset = RealDataset()
-#             val_dataset = RealDataset(train=False)
-#     else:
-#         raise NotImplementedError('Dataset: {} not implemented.'.format(dataset))
-#     val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)    
-
-#     return train_dataset, val_dataset, val_metric
-
-
-def get_dataloader(net, train_dataset, val_dataset, data_shape, batch_size, num_workers):
-    """Get dataloader."""
-    width, height = data_shape, data_shape
-    # use fake data to generate fixed anchors for target generation
-    with autograd.train_mode():
-        _, _, anchors = net(mx.nd.zeros((1, 3, height, width)))
-    batchify_fn = Tuple(Stack(), Stack(), Stack())  # stack image, cls_targets, box_targets
-    train_loader = gluon.data.DataLoader(
-        train_dataset.transform(SSDDefaultTrainTransform(width, height, anchors)),
-        batch_size, True, batchify_fn=batchify_fn, last_batch='rollover', num_workers=num_workers)
-    val_batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
-    val_loader = gluon.data.DataLoader(
-        val_dataset.transform(SSDDefaultValTransform(width, height)),
-        batch_size, False, batchify_fn=val_batchify_fn, last_batch='keep', num_workers=num_workers)
-    return train_loader, val_loader
-
-
-# def save_params(net, best_map, current_map, epoch, save_interval, prefix):
-#     current_map = float(current_map)
-#     if current_map > best_map[0]:
-#         best_map[0] = current_map
-#         net.save_parameters('{:s}_best.params'.format(prefix, epoch, current_map))
-#         with open(prefix+'_best_map.log', 'a') as f:
-#             f.write('{:04d}:\t{:.4f}\n'.format(epoch, current_map))
-#     if save_interval and epoch % save_interval == 0:
-#         net.save_parameters('{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map))
-
-def validate(net, val_data, ctx, eval_metric):
-    """Test on validation dataset."""
-    eval_metric.reset()
-    # set nms threshold and topk constraint
-    net.set_nms(nms_thresh=0.45, nms_topk=400)
-    net.hybridize(static_alloc=True, static_shape=True)
-    for batch in val_data:
-        data = gluon.utils.split_and_load(batch[0], ctx_list=ctx, batch_axis=0, even_split=False)
-        label = gluon.utils.split_and_load(batch[1], ctx_list=ctx, batch_axis=0, even_split=False)
-        det_bboxes = []
-        det_ids = []
-        det_scores = []
-        gt_bboxes = []
-        gt_ids = []
-        gt_difficults = []
-        for x, y in zip(data, label):
-            # get prediction results
-            ids, scores, bboxes = net(x)
-            det_ids.append(ids)
-            det_scores.append(scores)
-            # clip to image size
-            det_bboxes.append(bboxes.clip(0, batch[0].shape[2]))
-            # split ground truths
-            gt_ids.append(y.slice_axis(axis=-1, begin=4, end=5))
-            gt_bboxes.append(y.slice_axis(axis=-1, begin=0, end=4))
-            gt_difficults.append(y.slice_axis(axis=-1, begin=5, end=6) if y.shape[-1] > 5 else None)
-
-        # update metric
-        eval_metric.update(det_bboxes, det_ids, det_scores, gt_bboxes, gt_ids, gt_difficults)
-    return eval_metric.get()
 
 def train(net, train_data, val_data, eval_metric, ctx, args):
     """Training pipeline"""
@@ -176,7 +112,11 @@ def train(net, train_data, val_data, eval_metric, ctx, args):
     logger.info(args)
     logger.info('Start training from [Epoch {}]'.format(args.start_epoch))
     best_map = [0]
+
+    start_train_time = time.time()
+
     for epoch in range(args.start_epoch, args.epochs):
+        start_epoch_time = time.time()
         while lr_steps and epoch >= lr_steps[0]:
             new_lr = trainer.learning_rate * lr_decay
             lr_steps.pop(0)
@@ -220,7 +160,7 @@ def train(net, train_data, val_data, eval_metric, ctx, args):
             epoch, (time.time()-tic), name1, loss1, name2, loss2))
         if (epoch % args.val_interval == 0) or (args.save_interval and epoch % args.save_interval == 0):
             # consider reduce the frequency of validation to save time
-            map_name, mean_ap = validate(net, val_data, ctx, eval_metric)
+            map_name, mean_ap = validate_ssd(net, val_data, ctx, eval_metric)
             val_msg = '\n'.join(['{}={}'.format(k, v) for k, v in zip(map_name, mean_ap)])
             logger.info('[Epoch {}] Validation: \n{}'.format(epoch, val_msg))
             current_map = float(mean_ap[-1])
@@ -228,6 +168,11 @@ def train(net, train_data, val_data, eval_metric, ctx, args):
             current_map = 0.
         save_params(net, logger, best_map, current_map, epoch, args.save_interval, args.save_prefix)
 
+        end_epoch_time = time.time()
+        logger.info('Epoch time {:.3f}'.format(end_epoch_time - start_epoch_time))
+    end_train_time = time.time()
+    logger.info('Train time {:.3f}'.format(end_train_time - start_train_time))
+    
 if __name__ == '__main__':
     args = parse_args()
     # fix seed for mxnet, numpy and python builtin random generator.
@@ -263,8 +208,10 @@ if __name__ == '__main__':
     async_net = net
     # training data
     
-    train_data, val_data = get_dataloader(
-        async_net, train_dataset, val_dataset, args.data_shape, args.batch_size, args.num_workers)
+    train_data, val_data = get_ssd_dataloader(
+        async_net, train_dataset, val_dataset, args.data_shape, args.batch_size, 
+        args.num_workers, bilateral_kernel_size=args.bilateral_kernel_size,
+        sigma_vals=args.sigma_vals, grayscale=args.grayscale)
 
     # training
     train(net, train_data, val_data, eval_metric, ctx, args)

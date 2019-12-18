@@ -1,8 +1,13 @@
 from os.path import join as pjoin
 
+import mxnet as mx
+from mxnet import gluon
+from mxnet import autograd
+from gluoncv.data.batchify import Tuple, Stack, Pad
 from gluoncv.utils.metrics.voc_detection import VOC07MApMetric, VOCMApMetric
 
-from traindet.utils import RealDataset, SynthDataset, RealGraspDataset
+from .utils import RealDataset, SynthDataset, RealGraspDataset
+from .transforms import SSDValTransform, SSDTrainTransform
 from . import config as cfg
 
 
@@ -50,3 +55,53 @@ def save_params(net, logger, best_map, current_map, epoch, save_interval, prefix
         logger.info('[Epoch {}] Saving parameters to {}'.format(
             epoch, '{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map)))
         net.save_parameters('{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map))
+
+
+def validate_ssd(net, val_data, ctx, eval_metric):
+    """Test on validation dataset."""
+    eval_metric.reset()
+    # set nms threshold and topk constraint
+    net.set_nms(nms_thresh=0.45, nms_topk=400)
+    net.hybridize(static_alloc=True, static_shape=True)
+    for batch in val_data:
+        data = gluon.utils.split_and_load(batch[0], ctx_list=ctx, batch_axis=0, even_split=False)
+        label = gluon.utils.split_and_load(batch[1], ctx_list=ctx, batch_axis=0, even_split=False)
+        det_bboxes = []
+        det_ids = []
+        det_scores = []
+        gt_bboxes = []
+        gt_ids = []
+        gt_difficults = []
+        for x, y in zip(data, label):
+            # get prediction results
+            ids, scores, bboxes = net(x)
+            det_ids.append(ids)
+            det_scores.append(scores)
+            # clip to image size
+            det_bboxes.append(bboxes.clip(0, batch[0].shape[2]))
+            # split ground truths
+            gt_ids.append(y.slice_axis(axis=-1, begin=4, end=5))
+            gt_bboxes.append(y.slice_axis(axis=-1, begin=0, end=4))
+            gt_difficults.append(y.slice_axis(axis=-1, begin=5, end=6) if y.shape[-1] > 5 else None)
+
+        # update metric
+        eval_metric.update(det_bboxes, det_ids, det_scores, gt_bboxes, gt_ids, gt_difficults)
+    return eval_metric.get()
+
+
+def get_ssd_dataloader(net, train_dataset, val_dataset, data_shape, batch_size, 
+                   num_workers, bilateral_kernel_size, sigma_vals, grayscale):
+    """Get dataloader."""
+    width, height = data_shape, data_shape
+    # use fake data to generate fixed anchors for target generation
+    with autograd.train_mode():
+        _, _, anchors = net(mx.nd.zeros((1, 3, height, width)))
+    batchify_fn = Tuple(Stack(), Stack(), Stack())  # stack image, cls_targets, box_targets
+    train_loader = gluon.data.DataLoader(
+        train_dataset.transform(SSDTrainTransform(width, height, anchors, bilateral_kernel_size=bilateral_kernel_size, sigma_vals=sigma_vals, grayscale=grayscale)),
+        batch_size, True, batchify_fn=batchify_fn, last_batch='rollover', num_workers=num_workers)
+    val_batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
+    val_loader = gluon.data.DataLoader(
+        val_dataset.transform(SSDValTransform(width, height, bilateral_kernel_size=bilateral_kernel_size, sigma_vals=sigma_vals, grayscale=grayscale)),
+        batch_size, False, batchify_fn=val_batchify_fn, last_batch='keep', num_workers=num_workers)
+    return train_loader, val_loader

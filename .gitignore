@@ -1,16 +1,15 @@
-misc/*
-old/*
-data/datasets/*
-data/datasets/*
-data/checkpoints/*
-data/gen_data/*
-data/assets/*
-data/videos/*
-data/grasping/*
-outputs/*
-backups/*
-test_nbs/*
-temp/*
+misc/
+data/datasets/
+data/checkpoints/
+data/gen_data/
+data/assets/
+data/videos/
+data/grasping/
+outputs/
+backups/
+test_nbs/
+temp/
+original_scripts/
 
 !data/datasets/DATASETS.md
 !data/checkpoints/CHECKPOINTS.md
@@ -18,7 +17,7 @@ temp/*
 !data/assets/ASSETS.md
 
 *.debris
-.vscode/*
+.vscode/
 
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python
