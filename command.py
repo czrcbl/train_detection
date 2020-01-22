@@ -2,7 +2,7 @@
 import subprocess
 from traindet import config as cfg
 
-dataset = 'real'
+dataset = 'mixed'
 epochs = '100'
 
 
@@ -12,7 +12,7 @@ command = f"""
         --base-model ssd_512_resnet50_v1_coco
         --data-shape 512
         --dataset {dataset}
-        --save-prefix {cfg.checkpoints_folder}/{dataset}/ssd512_real_time_benchmark/
+        --save-prefix {cfg.checkpoints_folder}/{dataset}/ssd512_mixed_time_benchmark/
         --batch-size 4
         --epochs {epochs}
         --lr 0.001
