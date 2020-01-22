@@ -1,20 +1,13 @@
 misc/
-data/datasets/
-data/checkpoints/
-data/gen_data/
-data/assets/
-data/videos/
-data/grasping/
-outputs/
-backups/
+data/
 test_nbs/
 temp/
 original_scripts/
 
-!data/datasets/DATASETS.md
-!data/checkpoints/CHECKPOINTS.md
-!data/gen_data/GEN_DATA.md
-!data/assets/ASSETS.md
+# !data/datasets/DATASETS.md
+# !data/checkpoints/CHECKPOINTS.md
+# !data/gen_data/GEN_DATA.md
+# !data/assets/ASSETS.md
 
 *.debris
 .vscode/
