@@ -11,6 +11,17 @@ model_training = []
 
 cmds = edict()
 
+cmds.synth_test = f"""
+    python scripts/render.py
+        --mode deterministic
+        --dataset-name synth_test
+        --hangles 0,90,90
+        --vangles "-90,90,90"
+        --distances 300,600,900,1200
+        --background
+        --noise-std 0.3
+"""
+
 cmds.synth_small_nobg = f"""
     python scripts/render.py
         --mode deterministic
@@ -18,6 +29,7 @@ cmds.synth_small_nobg = f"""
         --hangles 0,90,30
         --vangles "-90,90,30"
         --distances 300,600,900
+        --noise-std 0.3
 """
 
 # dataset_creation.append(synth_small_nobg)
@@ -30,6 +42,18 @@ cmds.synth_small_bg = f"""
         --vangles "-90,90,30"
         --distances 300,600,900
         --background
+        --noise-std 0.3
+"""
+
+cmds.synth_medium_bg = f"""
+        python scripts/render.py
+        --mode deterministic
+        --dataset-name synth_medium_bg
+        --hangles 0,90,10
+        --vangles "-90,90,10"
+        --distances 300,600,900,1200
+        --background
+        --noise-std 0.3
 """
 
 # dataset_creation.append(synth_small_bg)
@@ -116,38 +140,6 @@ cmds.yolo_small_bg = default_yolo('frcnn_default', dataset, epochs)
 
 all_commandas = dataset_creation + model_training
 
-dataset = 'real'
-name = 'frcnn_test'
-epochs = 5
-cmds.frcnn_test = f"""
-    python scripts/train_faster_rcnn.py
-        --transfer
-        --base-model faster_rcnn_resnet50_v1b_coco
-        --dataset {dataset}
-        --save-prefix ~/Desktop/{dataset}/{name}/
-        --epochs {epochs}
-        --lr 0.001
-        --lr-decay 0.1
-        --lr-decay-epoch 20,40
-        --seed 233
-"""
-
-name = 'ssd_test'
-cmds.ssd_test = f"""
-    python scripts/train_ssd.py 
-        --transfer
-        --base-model ssd_512_resnet50_v1_coco
-        --data-shape 512
-        --dataset {dataset}
-        --save-prefix {cfg.checkpoints_folder}/{dataset}/{name}/
-        --batch-size 4
-        --epochs {epochs}
-        --lr 0.001
-        --lr-decay 0.1
-        --lr-decay-epoch 20,40
-        --seed 233
-    """
-
 
 def main():
     
@@ -156,6 +148,10 @@ def main():
 
     args = parser.parse_args()
 
+    for c in args.name.split(','):
+        if c not in cmds:
+            raise ValueError(f'Cmd {c} not avaliable, avaliable commands: {cmds.keys()}')
+    
     for c in args.name.split(','):
         subprocess.call(cmds[c].split())
     

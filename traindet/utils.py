@@ -16,7 +16,7 @@ import os
 import pickle
 from os.path import join as pjoin
 from copy import copy
-
+from easydict import EasyDict as edict
 from traindet import config as cfg
 
 
@@ -262,15 +262,28 @@ def load_map(model, dataset):
     return map_df, epoch_df
     
 
-def load_predictions(dataset):
-
-    out = {}
-    for model in cfg.model_names:
-        path = pjoin(cfg.gen_data_folder, f'predictions/{model}_{dataset}.pkl')
-        with open(path, 'rb') as f:
-            out[model] = pickle.load(f)
+def load_predictions(models, datasets):
+    models = models.split(',')
+    datasets = datasets.split(',')
+    out = edict()
+    for dataset in datasets:
+        out[dataset] = edict()
+        for model in models:
+            path = pjoin(cfg.gen_data_folder, f'predictions/{model}_{dataset}.pkl')
+            with open(path, 'rb') as f:
+                out[dataset][model] = pickle.load(f)
 
     return out
+
+# def load_predictions(dataset):
+
+#     out = {}
+#     for model in cfg.model_names:
+#         path = pjoin(cfg.gen_data_folder, f'predictions/{model}_{dataset}.pkl')
+#         with open(path, 'rb') as f:
+#             out[model] = pickle.load(f)
+
+#     return out
 
 
 def calc_map(preds, labels, width, height, eval_metric):

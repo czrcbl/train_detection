@@ -21,7 +21,7 @@ def get_dataset(dataset, mixup=False):
         val_dataset = RealGraspDataset(mode='test')
     elif dataset.split('_')[0] == 'synth':
         train_dataset = SynthDataset(root=pjoin(cfg.dataset_folder, dataset), mode='all')
-        val_dataset = RealDataset(mode='test')  
+        val_dataset = RealDataset(mode='all')  
     val_metric = VOCMApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
     
     if mixup:

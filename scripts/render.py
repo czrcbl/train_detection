@@ -97,6 +97,9 @@ def parse_args():
 
     parser.add_argument('--noise-std', default=0.3, type=float, help='Gaussian noise \
         standard deviation in a fraction of the step in deterministic mode')
+
+    parser.add_argument('--num_lamps', default=3, help='Number of lamps on scene.')
+    parser.add_argument('--light_power', default='5,6.5', help='(10**power_min, 10**power_max')
     
     # parser.add_argument('--noise-std', default=0, help='Standard deviation of gaussian noise added to ')
     args = parser.parse_args()

@@ -14,8 +14,8 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Run the trained model on the validation set.')
     parser.add_argument('--model-type', help='Model type.')
-    parser.add_argument('--model', default='', help='Model to use.')
-    parser.add_argument('--dataset', default='', help='Dataset to use.')
+    parser.add_argument('--model', help='Model to use.')
+    parser.add_argument('--dataset', help='Dataset to use.')
     args = parser.parse_args()
 
     return args
