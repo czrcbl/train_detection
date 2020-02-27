@@ -72,10 +72,10 @@ def update_camera(camera, focus_point=mathutils.Vector((0.0, 0.0, 0.0)), distanc
     return new_position
 
 
-def create_lamp(point, energy=1000):
-    lamp_data = bpy.data.lights.new(name="Lamp", type='POINT')
+def create_lamp(name, point, energy=1000):
+    lamp_data = bpy.data.lights.new(name=name, type='POINT')
     lamp_data.energy = energy
-    lamp_object = bpy.data.objects.new(name="Lamp", object_data=lamp_data)
+    lamp_object = bpy.data.objects.new(name=name, object_data=lamp_data)
     bpy.context.collection.objects.link(lamp_object)
     bpy.context.view_layer.objects.active = lamp_object
     lamp_object.location = point
@@ -290,8 +290,7 @@ def deterministic_render(args):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    energy = 10**6
-    lamp = None
+
 
 
     prefs = bpy.context.preferences
@@ -317,6 +316,14 @@ def deterministic_render(args):
     vert_angles, vert_step = create_parameter_range(args.vangles)
     distances = [float(a) for a in args.distances.split(',')]
 
+    energies, _ = create_parameter_range(args.light_power) 
+    energy_min = 10**energies[0]
+    energy_max = 10**energies[1]
+
+    # lamp = create_lamp(Vector((0, 0, 0)), energy)
+
+    n_lights = int(args.num_lamps)
+
     for obj_number, part in enumerate(parts):
         
         clear()
@@ -330,15 +337,15 @@ def deterministic_render(args):
         scene.camera = cam_ob
         
         scene.camera.data.clip_end = 10000
-
         prefix = pjoin(output_folder, part['name'])
-        i = 0
-        n = 0
-        # for obj_rot in (0, math.pi/2):
-        # obj.rotation_euler = tuple([a + b for a, b in zip(part['rot'], (obj_rot, 0, 0))]) 
+        itr = 0
+
         obj.rotation_euler = part['rot']
+        
+        for i in range(n_lights):
+            lamp = create_lamp(f'Lamp{i}', Vector((0, 0, 0)), random.uniform(energy_min, energy_max))
+        
         for dist in distances:
-            n += 1
             for vert_angle in vert_angles:
                 for rot_angle in rot_angles:
                     distr = random.gauss(dist, noise_std * dist)
@@ -350,21 +357,24 @@ def deterministic_render(args):
                     x = d * math.cos(rot_angler)
                     y = d * math.sin(rot_angler)
                     
-                    l_z = 10 * math.sin(vert_angler)
-                    l_d = 10 * math.cos(vert_angler)
-                    l_x = l_d * math.cos(rot_angler)
-                    l_y = l_d * math.sin(rot_angler)
-                    
                     cam_ob.location = (x, y, z)
                     pos = update_camera(cam_ob, Vector((0, 0, 0)))
-                    del lamp
-                    lamp = create_lamp(Vector((0, 0, 0)), energy)
-                    lamp.location = pos + Vector((l_x, l_y, l_z))
-                    fprefix = pjoin(prefix, str(i))
+
+                    for i in range(n_lights):
+                        bpy.data.lights[f'Lamp{i}'].energy = random.uniform(energy_min, energy_max)
+                        vert_anglerR = random.uniform(0, 2*math.pi)
+                        rot_anglerR = random.uniform(0, 2*math.pi)
+                        l_z = random.uniform(150, dist) * math.sin(vert_anglerR)
+                        l_d = random.uniform(150, dist) * math.cos(vert_anglerR)
+                        l_x = l_d * math.cos(rot_anglerR)
+                        l_y = l_d * math.sin(rot_anglerR)
+                        bpy.data.objects[f"Lamp{i}"].location = Vector((l_x, l_y, l_z))
+                    
+                    fprefix = pjoin(prefix, str(itr))
                     
                     render_scene_bb(scene, cam_ob, obj, obj_number, fprefix)
                     
-                    i += 1
+                    itr += 1
 
 
 def random_render(args):
