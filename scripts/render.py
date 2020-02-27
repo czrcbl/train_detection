@@ -11,15 +11,15 @@ from os.path import join as pjoin
 
 from traindet import config as cfg
 
-def add_background(rendered_folder, output_folder, args):
+def add_background(rendered_folder, output_folder, args, gray=False):
     
     rendered_folder = Path(rendered_folder)
-    backgrouds_folder = Path(cfg.backgrounds_folder)
+    backgrounds_folder = Path(cfg.backgrounds_folder)
     output_folder =  Path(output_folder)
 
     classes = os.listdir(rendered_folder)
 
-    bgs = [backgrouds_folder / fn for fn in os.listdir(backgrouds_folder)]
+    bgs = [backgrounds_folder / fn for fn in os.listdir(backgrounds_folder)]
 
     random.seed(args.seed)
     for _class in classes:
@@ -29,7 +29,10 @@ def add_background(rendered_folder, output_folder, args):
             if fn.suffix == '.png':
                 origin_path = cls_path / fn
                 print(f'Processing file {origin_path}')
-                bg = random.choice(bgs)
+                if gray:
+                    bg = pjoin(cfg.assets_folder, 'gray_bg.jpeg')
+                else:
+                    bg = random.choice(bgs)
                 background = Image.open(bg)
                 foreground = Image.open(origin_path)
                 background = background.resize(foreground.size, Image.ANTIALIAS)
@@ -39,12 +42,13 @@ def add_background(rendered_folder, output_folder, args):
                 origin_label = os.path.splitext(str(origin_path))[0] + '.txt'
                 shutil.copy(origin_label, output_folder / _class / (str(fn).split('.')[0] + '.txt'))
             
+    shutil.rmtree(rendered_folder)
 
-def split_dataset(args):
+
+def split_dataset(dataset_folder, args):
 
     seed = args.seed
     train_fraq = args.train_fraq
-    dataset_folder = pjoin(args.output_folder, args.dataset_name)
     random.seed(seed)
     data = []
     for folder in sorted(os.listdir(dataset_folder)):
@@ -69,20 +73,34 @@ def split_dataset(args):
 
 def parse_args():
 
-    parser = argparse.ArgumentParser('Render parts images on blender.')
-    parser.add_argument('--mode', default='test', 
-        help='The mode of the rendering.')
-    parser.add_argument('--dataset-name', 
-        help='The name of the output dataset.')
-    parser.add_argument('--seed', default=233)
+    parser = argparse.ArgumentParser('Render parts images using blender.')
+    parser.add_argument('--dataset-name', help='The name of the output dataset.')
     parser.add_argument('--train-fraq', default=0.7)
+    parser.add_argument('--seed', default=233, type=int)
     parser.add_argument('--output-folder', default=pjoin(cfg.project_folder, 'temp'))
-    parser.add_argument('--nviews', default=0, help='Number of views per object on random mode')
+    parser.add_argument('--background', action='store_true')
+    
+    parser.add_argument('--mode', default='test', 
+        help='The mode of the rendering, options: random, deterministic, test')
+    
+    parser.add_argument('--vangles', default='-90,90,30', help='Vertical angle,\
+         three values on deterministic mode (main,max,step), two on random mode \
+        (min,max)')
+    parser.add_argument('--hangles', default='0,90,30', help='Horizontal angle,\
+         three values on deterministic mode (main,max,step), two on random mode\
+         (min,max)')
+    parser.add_argument('--distances', default='300,600,1000', 
+        help='Camera distances from object, list of values on deterministic mode \
+        , two values on random mode (min,max)')
+
+    parser.add_argument('--nviews', default=3, help='Number of views per object on random mode')
+
+    parser.add_argument('--noise-std', default=0.3, type=float, help='Gaussian noise \
+        standard deviation in a fraction of the step in deterministic mode')
+    
+    # parser.add_argument('--noise-std', default=0, help='Standard deviation of gaussian noise added to ')
     args = parser.parse_args()
 
-    # assert (args.out_dataset_folder not in os.listdir(cfg.dataset_folder)),\
-    #     'Dataset Output Folder already exists.'
-    
     return args
 
 
@@ -94,10 +112,11 @@ def main():
         --python rendering/entry.py
         --
     """
-
+    # propagate all the original args to blender script
     for key, val in args._get_kwargs():
         command += f' --{key} {val}'
 
+    # add folders to args
     extra_args = {
         'assets_folder': cfg.assets_folder,
         'parts_folder': cfg.parts_folder,
@@ -105,11 +124,17 @@ def main():
     for key, val in extra_args.items():
         command += f' --{key} {val}'
 
-    print(command.split())
     subprocess.call(command.split())
-    # if not os.path.isdir(args.outp)
-    add_background(pjoin(args.output_folder, 'rendered_images'), pjoin(args.output_folder, args.dataset_name), args)
-    split_dataset(args)
+
+    rendered_folder = pjoin(args.output_folder, 'rendered_images')
+    dataset_folder = pjoin(args.output_folder, args.dataset_name)
+    if args.background:
+        add_background(rendered_folder, dataset_folder, args)
+    else:
+        # os.rename(rendered_folder, dataset_folder)
+        add_background(rendered_folder, dataset_folder, args, gray=True)
+    
+    split_dataset(dataset_folder, args)
 
 if __name__ == '__main__':
 

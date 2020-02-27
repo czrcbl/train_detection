@@ -266,17 +266,29 @@ def add_texture(texture_path, obj):
 #     me = ob.data
 #     me.materials.append(mat)
 
+def create_parameter_range(arg):
+    vals = [float(a) for a in arg.strip('"').split(',')]
+    out = []
+    v = vals[0]
+    while v <= vals[1]:
+        out.append(v)
+        v += vals[-1]
+    if out[-1] < vals[1]:
+        out.append(vals[1])
+    
+    return out, vals[-1]
 
 def deterministic_render(args):
 
-    # args = parse_args()
+    random.seed(int(args.seed))
+
+    noise_std = float(args.noise_std)
+
     root_dir = args.output_folder
-    output_folder = pjoin(root_dir, f'rendered_images/{args.mode}')
+    output_folder = pjoin(root_dir, f'rendered_images')
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-
-    random.seed(args.seed)
 
     energy = 10**6
     lamp = None
@@ -289,6 +301,7 @@ def deterministic_render(args):
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES'
     scene.cycles.device = 'GPU'
+    
     cprefs = prefs.addons['cycles'].preferences
     try:
         cprefs.compute_device_type = 'CUDA'
@@ -299,6 +312,10 @@ def deterministic_render(args):
     for device in cuda_devices:
         print(f'Activating {device.name}')
         device.use = True
+
+    rot_angles, rot_step = create_parameter_range(args.hangles)
+    vert_angles, vert_step = create_parameter_range(args.vangles)
+    distances = [float(a) for a in args.distances.split(',')]
 
     for obj_number, part in enumerate(parts):
         
@@ -314,42 +331,46 @@ def deterministic_render(args):
         
         scene.camera.data.clip_end = 10000
 
-        distances, vert_angles, rot_angles = get_params(part, mode=args.mode)
-
         prefix = pjoin(output_folder, part['name'])
         i = 0
         n = 0
-        for obj_rot in (0, math.pi/2):
-            obj.rotation_euler = tuple([a + b for a, b in zip(part['rot'], (obj_rot, 0, 0))]) 
-            for dist in distances:
-                n += 1
-                for vert_angle in vert_angles:
-                    for rot_angle in rot_angles:
-                        
-                        z = dist * math.sin(vert_angle)
-                        d = dist * math.cos(vert_angle)
-                        x = d * math.cos(rot_angle)
-                        y = d * math.sin(rot_angle)
-                        
-                        l_z = 10 * math.sin(vert_angle)
-                        l_d = 10 * math.cos(vert_angle)
-                        l_x = l_d * math.cos(rot_angle)
-                        l_y = l_d * math.sin(rot_angle)
-                        
-                        cam_ob.location = (x, y, z)
-                        pos = update_camera(cam_ob, Vector((0, 0, 0)))
-                        del lamp
-                        lamp = create_lamp(Vector((0, 0, 0)), energy)
-                        lamp.location = pos + Vector((l_x, l_y, l_z))
-                        fprefix = pjoin(prefix, str(i))
-                        
-                        render_scene_bb(scene, cam_ob, obj, obj_number, fprefix)
-                        
-                        i += 1
+        # for obj_rot in (0, math.pi/2):
+        # obj.rotation_euler = tuple([a + b for a, b in zip(part['rot'], (obj_rot, 0, 0))]) 
+        obj.rotation_euler = part['rot']
+        for dist in distances:
+            n += 1
+            for vert_angle in vert_angles:
+                for rot_angle in rot_angles:
+                    distr = random.gauss(dist, noise_std * dist)
+                    vert_angler = random.gauss(vert_angle, noise_std * vert_step)
+                    rot_angler = random.gauss(rot_angle, noise_std * rot_step)
+
+                    z = distr * math.sin(vert_angler)
+                    d = distr * math.cos(vert_angler)
+                    x = d * math.cos(rot_angler)
+                    y = d * math.sin(rot_angler)
+                    
+                    l_z = 10 * math.sin(vert_angler)
+                    l_d = 10 * math.cos(vert_angler)
+                    l_x = l_d * math.cos(rot_angler)
+                    l_y = l_d * math.sin(rot_angler)
+                    
+                    cam_ob.location = (x, y, z)
+                    pos = update_camera(cam_ob, Vector((0, 0, 0)))
+                    del lamp
+                    lamp = create_lamp(Vector((0, 0, 0)), energy)
+                    lamp.location = pos + Vector((l_x, l_y, l_z))
+                    fprefix = pjoin(prefix, str(i))
+                    
+                    render_scene_bb(scene, cam_ob, obj, obj_number, fprefix)
+                    
+                    i += 1
 
 
 def random_render(args):
     """Render the object in random positions."""
+
+    random.seed(args.seed)
 
     root_dir = args.output_folder
     output_folder = pjoin(root_dir, f'rendered_images')
@@ -359,14 +380,14 @@ def random_render(args):
 
     textures = listdir(pjoin(args.assets_folder, 'textures'))
     random.seed(args.seed)
-
+    distances = create_parameter_range(args.distances)
     # n_views = 10
     params_range = {
         'energy': (5*10e5, 10e6),
         'rot_x': (0, 2 * math.pi),
         'rot_y': (0, 2 * math.pi),
         'rot_z': (0, 2 * math.pi),
-        'distance': (150, 2000),
+        'distance': distances,
         'lamp_r': (300, 1000)
     }
 
@@ -446,8 +467,8 @@ def main():
         random_render(args)
     elif args.mode == 'deterministic':
         deterministic_render(args)
-
-
+    elif args.mode == 'random':
+        random_render(args)
 
 
 if __name__ == '__main__':

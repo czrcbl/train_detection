@@ -2,6 +2,7 @@ import mxnet as mx
 import mxnet.gluon.data as gdata
 from mxnet import nd
 # from gluoncv.utils import viz
+import gluoncv as gcv
 from gluoncv import model_zoo
 from gluoncv.data import transforms
 # from gluoncv.utils import bbox_iou
@@ -171,24 +172,24 @@ class SynthDataset(gdata.Dataset):
         return process_examples(self.fns[idx], self.targets[idx])
 
 
-def load_model(model_name, dataset, ctx=mx.gpu()):
+def load_model(model_type, model_name, dataset, ctx=mx.gpu()):
 
-    if model_name == 'ssd300':
+    if model_type == 'ssd300':
         net = model_zoo.get_model('ssd_300_vgg16_atrous_coco', pretrained=True, ctx=ctx, prefix='ssd0_')
         # net = model_zoo.get_model('ssd_300_vgg16_atrous_coco', pretrained=True, ctx=ctx)
-        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/ssd300/transfer_300_ssd_300_vgg16_atrous_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/{model_name}/transfer_300_ssd_300_vgg16_atrous_coco_best.params')
         transform = transforms.presets.ssd.SSDDefaultValTransform(width=300, height=300)
-    elif model_name == 'ssd512':
+    elif model_type == 'ssd512':
         net = model_zoo.get_model('ssd_512_resnet50_v1_coco', pretrained=True, ctx=ctx, prefix='ssd0_')
-        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/ssd512/transfer_512_ssd_512_resnet50_v1_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/{model_name}/transfer_512_ssd_512_resnet50_v1_coco_best.params')
         transform = transforms.presets.ssd.SSDDefaultValTransform(width=512, height=512)
-    elif model_name == 'yolo416':
+    elif model_type == 'yolo416':
         net = model_zoo.get_model('yolo3_darknet53_coco', pretrained=True, ctx=ctx)
-        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/yolo416/transfer_416_yolo3_darknet53_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/{model_name}/transfer_416_yolo3_darknet53_coco_best.params')
         transform = transforms.presets.yolo.YOLO3DefaultValTransform(width=416, height=416)
-    elif model_name == 'frcnn':
+    elif model_type == 'frcnn':
         net = model_zoo.get_model('faster_rcnn_resnet50_v1b_coco', pretrained=True, ctx=ctx)
-        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/faster_rcnn/transfer_faster_rcnn_resnet50_v1b_coco_best.params')
+        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/{model_name}/transfer_faster_rcnn_resnet50_v1b_coco_best.params')
         transform = transforms.presets.rcnn.FasterRCNNDefaultValTransform(short=600)
     else:
         raise NotImplementedError(f'Model {model_name} is not implemented.')
@@ -270,6 +271,27 @@ def load_predictions(dataset):
             out[model] = pickle.load(f)
 
     return out
+
+
+def calc_map(preds, labels, width, height, eval_metric):
+    assert len(preds) == len(labels)
+    eval_metric.reset()
+    # clipper = gcv.nn.bbox.BBoxClipToImage()
+    for pred, label in zip(preds, labels):
+        label = label[None, :, :]
+        pred = pred[None, :, :]
+        pred_bboxes = pred[:, :, :4]
+        pred_bboxes[:, :, 0] = pred_bboxes[:, :, 0].clip(0, width)
+        pred_bboxes[:, :, 2] = pred_bboxes[:, :, 2].clip(0, width)
+        pred_bboxes[:, :, 1] = pred_bboxes[:, :, 1].clip(0, height)
+        pred_bboxes[:, :, 3] = pred_bboxes[:, :, 3].clip(0, height)
+        # pred_bboxes = clipper(nd.array(pred_bboxes), nd.array(img))
+        pred_ids = pred[:, :, 4].astype(np.int)
+        pred_scores = pred[:, :, 5]
+        gt_bboxes = label[:, :, :4]
+        gt_ids = label[:, :, 4].astype(np.int)
+        eval_metric.update(pred_bboxes, pred_ids, pred_scores, gt_bboxes, gt_ids)
+    return eval_metric.get()
 
 
 if __name__ == '__main__':

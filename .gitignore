@@ -1,8 +1,5 @@
-misc/
 data/
-test_nbs/
 temp/
-original_scripts/
 
 # !data/datasets/DATASETS.md
 # !data/checkpoints/CHECKPOINTS.md

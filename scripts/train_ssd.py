@@ -30,7 +30,7 @@ from gluoncv import model_zoo
 def parse_args():
     parser = argparse.ArgumentParser(description='Train SSD networks.')
     parser.add_argument('--transfer', action='store_true',
-                        help="Wheter to apply transfer learning on whole model.")
+                        help="Whether to apply transfer learning on whole model.")
     parser.add_argument('--base-model', type=str, default='',
                         help="Base model which will be modified.")
     parser.add_argument('--dataset', type=str, default='custom',
@@ -215,3 +215,4 @@ if __name__ == '__main__':
 
     # training
     train(net, train_data, val_data, eval_metric, ctx, args)
+    

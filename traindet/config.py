@@ -10,6 +10,8 @@ data_folder = pjoin(project_folder, 'data')
 dataset_folder = pjoin(data_folder, 'datasets')
 gen_data_folder = pjoin(data_folder, 'gen_data')
 checkpoints_folder = pjoin(data_folder, 'checkpoints')
+# checkpoints_folder = pjoin(project_folder, 'checkpoints')
+outputs_folder = pjoin(data_folder, 'outputs')
 
 assets_folder = pjoin(data_folder, 'assets')
 parts_folder = pjoin(assets_folder, 'stl_models')
@@ -60,9 +62,8 @@ classes_grasp = [
 
 dataset_names = [
     'real',  # Real Object Photos
-    'synth', # Synthesized 
-    'mixed', # Train on synth, test on real
-    'synth02'
+    'synth_small_nobg',
+    'synth_small_bg'
     ]
 
 # Metric

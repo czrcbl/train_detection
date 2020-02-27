@@ -1,47 +1,54 @@
 # Object Detection for Additive Manufactured Parts
 
-## Detection
+The rest of this repository contains the code base used on the article(s) [to be published](article_link).
 
-`detection` package consists in a wrapper around the trained models and provides some utilities related to the manipulation and visualization of bounding boxes. Detection is self contained and does not depend on the other packages in this repository. The only dependence are the models stored in `data/checkpoints` folder.
-This package is supposed to work with python2 and python3. 
+## Setup
 
-<!--
-Download models from the [Dropbox Folder](https://www.dropbox.com/sh/1v53pmryf6jrig9/AAAhRwnVNLHnF3vs_eJttB2sa?dl=0). Place them on models folder.
--->
+### Installing CUDA 10.1
+You will need CUDA 10.1 in order to run `mxnet 1.51`, on Ubuntu:
 
+Add Nvidia repository:
+```bash
+sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub && echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
+```
 
-## Other packages
+Install CUDA 10.1
+```bash
+sudo apt-get update && sudo apt-get -o Dpkg::Options::="--force-overwrite" install cuda-10-1 cuda-drivers
+```
 
-The rest of this repository contains the code necessary to reproduce the results obtained on
-the article [to be published](article_link).
+### Setting up the environment: 
 
+Create a environment (I use conda):
+```bash
+conda create -n traindet python=3.7.6
+conda activate traindet
+```
+Install packages:
+```bash
+git clone https://github.com/czrcbl/train_detection
+cd train_detection
+pip install -r requirements.txt
+```
+
+In order to run some scripts, you need to install the following packages:
+```bash
+git clone https://github.com/czrcbl/bboxes
+cd bboxes
+pip install -e .
+
+git clone https://github.com/czrcbl/detection
+cd detection
+pip install -e .
+```
+### Rendering
+
+In order to run the rendering code, you need the  `blender` executable, version 2.80, in the path.
+Download from [HERE](https://www.blender.org/download).
 ## Structure
 
 * Folder `traindet` has the core utilities from training and evaluating
 the models.
-* Folder `rendering` has all the code that is supposed to be run through blender.
+* Folder `rendering` has all the code that is supposed to be run through blender. You must have the blender executable on system path.
 * Folder `scripts` has the scripts for launching the networks training, starting the rendering of synthetic images and producing some visualizations.
-* All the data to train the models should be placed on the `data` folder.
-All generated data and trained models are also placed in this folder.
-
-## Reproducing
-
-Execute:
-
-``` bash
-python scripts/train_experiments.py --test --model all
-```
-
-To train all models for 1 epoch. Remove the --test flag to perform the complete
-training
-
-Then, run:
-
-``` bash
-python scripts/make_predictions.py --model all --dataset all
-```
-
-To apply the models to the validation set and store the results on the `data/gen_data`
-folder.
-
-In the folder `nbs` there will be notebooks that compile the results.
+* All the data necessary to train the models should be placed on the `data` folder.

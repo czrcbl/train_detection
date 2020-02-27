@@ -16,6 +16,7 @@ from traindet import config as cfg
 from traindet.utils import load_model, RealDataset
 from traindet.val_utils import get_val_ssd_dataloader, get_val_frcnn_dataloader
 
+
 def filter_predictions(ids, scores, bboxes, th=0.5):
     idx = scores.squeeze().asnumpy() > th
     fscores = scores.squeeze().asnumpy()[idx]

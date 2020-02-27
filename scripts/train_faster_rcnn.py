@@ -23,7 +23,7 @@ from gluoncv.data.transforms.presets.rcnn import FasterRCNNDefaultTrainTransform
 from gluoncv.utils.metrics.voc_detection import VOC07MApMetric
 from gluoncv.utils.metrics.coco_detection import COCODetectionMetric
 
-from traindet.train_utils import get_dataset
+from traindet.train_utils import get_dataset, save_params
 from gluoncv import model_zoo
 
 def parse_args():
@@ -229,20 +229,19 @@ def get_dataloader(net, train_dataset, val_dataset, train_transform, val_transfo
     return train_loader, val_loader
 
 
-def save_params(net, logger, best_map, current_map, epoch, save_interval, prefix):
-    current_map = float(current_map)
-    if current_map > best_map[0]:
-        logger.info('[Epoch {}] mAP {} higher than current best {} saving to {}'.format(
-            epoch, current_map, best_map, '{:s}_best.params'.format(prefix)))
-        best_map[0] = current_map
-        net.save_parameters('{:s}_best.params'.format(prefix))
-        with open(prefix + '_best_map.log', 'a') as f:
-            f.write('{:04d}:\t{:.4f}\n'.format(epoch, current_map))
-    if save_interval and (epoch + 1) % save_interval == 0:
-        logger.info('[Epoch {}] Saving parameters to {}'.format(
-            epoch, '{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map)))
-        net.save_parameters('{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map))
-
+# def save_params(net, logger, best_map, current_map, epoch, save_interval, prefix):
+#     current_map = float(current_map)
+#     if current_map > best_map[0]:
+#         logger.info('[Epoch {}] mAP {} higher than current best {} saving to {}'.format(
+#             epoch, current_map, best_map, '{:s}_best.params'.format(prefix)))
+#         best_map[0] = current_map
+#         net.save_parameters('{:s}_best.params'.format(prefix))
+#         with open(prefix + '_best_map.log', 'a') as f:
+#             f.write('{:04d}:\t{:.4f}\n'.format(epoch, current_map))
+#     if save_interval and (epoch + 1) % save_interval == 0:
+#         logger.info('[Epoch {}] Saving parameters to {}'.format(
+#             epoch, '{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map)))
+#         net.save_parameters('{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map))
 
 def split_and_load(batch, ctx_list):
     """Split data to 1 batch each device."""
@@ -344,7 +343,11 @@ def train(net, train_data, val_data, eval_metric, ctx, args):
         logger.info(net.collect_train_params().keys())
     logger.info('Start training from [Epoch {}]'.format(args.start_epoch))
     best_map = [0]
+
+    start_train_time = time.time()
+
     for epoch in range(args.start_epoch, args.epochs):
+        start_epoch_time = time.time()
         mix_ratio = 1.0
         if args.mixup:
             # TODO(zhreshold) only support evenly mixup now, target generator needs to be modified otherwise
@@ -443,8 +446,11 @@ def train(net, train_data, val_data, eval_metric, ctx, args):
         else:
             current_map = 0.
         save_params(net, logger, best_map, current_map, epoch, args.save_interval, args.save_prefix)
-
-
+        end_epoch_time = time.time()
+        logger.info('Epoch time {:.3f}'.format(end_epoch_time - start_epoch_time))
+    end_train_time = time.time()
+    logger.info('Train time {:.3f}'.format(end_train_time - start_train_time))
+    
 if __name__ == '__main__':
     import sys
 

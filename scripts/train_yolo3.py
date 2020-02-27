@@ -234,7 +234,11 @@ def train(net, train_data, val_data, eval_metric, ctx, args):
     logger.info(args)
     logger.info('Start training from [Epoch {}]'.format(args.start_epoch))
     best_map = [0]
+
+    start_train_time = time.time()
+
     for epoch in range(args.start_epoch, args.epochs):
+        start_epoch_time = time.time()
         if args.mixup:
             # TODO(zhreshold): more elegant way to control mixup during runtime
             try:
@@ -300,6 +304,10 @@ def train(net, train_data, val_data, eval_metric, ctx, args):
         else:
             current_map = 0.
         save_params(net, logger, best_map, current_map, epoch, args.save_interval, args.save_prefix)
+        end_epoch_time = time.time()
+        logger.info('Epoch time {:.3f}'.format(end_epoch_time - start_epoch_time))
+    end_train_time = time.time()
+    logger.info('Train time {:.3f}'.format(end_train_time - start_train_time))
 
 if __name__ == '__main__':
     args = parse_args()

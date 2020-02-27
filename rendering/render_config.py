@@ -1,6 +1,7 @@
 import os
 import math
 
+# add initial rotation angle for parts.
 parts = [
             {
             'name': 'tray',
