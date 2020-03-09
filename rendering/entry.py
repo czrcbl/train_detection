@@ -282,6 +282,12 @@ def deterministic_render(args):
 
     random.seed(int(args.seed))
 
+    rot_angles, rot_step = create_parameter_range(args.hangles)
+    vert_angles, vert_step = create_parameter_range(args.vangles)
+    distances = [float(a) for a in args.distances.split(',')]
+    energies, _ = create_parameter_range(args.light_power) 
+    energy_min = 10**energies[0]
+    energy_max = 10**energies[1]
     noise_std = float(args.noise_std)
 
     root_dir = args.output_folder
@@ -289,9 +295,6 @@ def deterministic_render(args):
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-
-
-
 
     prefs = bpy.context.preferences
     cuda_devices, opencl_devices = bpy.context.preferences.addons['cycles'].preferences.get_devices()
@@ -312,16 +315,6 @@ def deterministic_render(args):
         print(f'Activating {device.name}')
         device.use = True
 
-    rot_angles, rot_step = create_parameter_range(args.hangles)
-    vert_angles, vert_step = create_parameter_range(args.vangles)
-    distances = [float(a) for a in args.distances.split(',')]
-
-    energies, _ = create_parameter_range(args.light_power) 
-    energy_min = 10**energies[0]
-    energy_max = 10**energies[1]
-
-    # lamp = create_lamp(Vector((0, 0, 0)), energy)
-
     n_lights = int(args.num_lamps)
 
     for obj_number, part in enumerate(parts):
@@ -335,7 +328,6 @@ def deterministic_render(args):
         cam_ob = bpy.data.objects.new("Camera", cam)
         bpy.context.collection.objects.link(cam_ob)
         scene.camera = cam_ob
-        
         scene.camera.data.clip_end = 10000
         prefix = pjoin(output_folder, part['name'])
         itr = 0

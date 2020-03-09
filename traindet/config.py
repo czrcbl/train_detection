@@ -46,6 +46,14 @@ formated_classes = [
     'Part 02', 
     'Part 03']
 
+abre_classes = [
+    'Tray', 
+    'D. Nozzle', 
+    'B. Pad', 
+    'Part01', 
+    'Part02', 
+    'Part03']
+
 
 classes_grasp = [
     'tray',

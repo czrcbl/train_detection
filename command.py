@@ -114,7 +114,7 @@ dataset = 'real'
 
 cmds.ssd_real = default_ssd('ssd_default', dataset, epochs)
 cmds.frcnn_real = default_frcnn('frcnn_default', dataset, epochs)
-cmds.yolo_real = default_yolo('frcnn_default', dataset, epochs)
+cmds.yolo_real = default_yolo('yolo_default', dataset, epochs)
 
 # model_training.extend([ssd_real, frcnn_real, yolo_real])
 
@@ -123,7 +123,7 @@ dataset = 'synth_small_nobg'
 
 cmds.ssd_small_nobg = default_ssd('ssd_default', dataset, epochs)
 cmds.frcnn_small_nobg = default_frcnn('frcnn_default', dataset, epochs)
-cmds.yolo_small_nobg = default_yolo('frcnn_default', dataset, epochs)
+cmds.yolo_small_nobg = default_yolo('yolo_default', dataset, epochs)
 
 # model_training.extend([ssd_small_nobg, frcnn_small_nobg, yolo_small_nobg])
 
@@ -132,7 +132,7 @@ dataset = 'synth_small_bg'
 
 cmds.ssd_small_bg = default_ssd('ssd_default', dataset, epochs)
 cmds.frcnn_small_bg = default_frcnn('frcnn_default', dataset, epochs)
-cmds.yolo_small_bg = default_yolo('frcnn_default', dataset, epochs)
+cmds.yolo_small_bg = default_yolo('yolo_default', dataset, epochs)
 
 # model_training.extend([ssd_small_bg, frcnn_small_bg, yolo_small_bg])
 

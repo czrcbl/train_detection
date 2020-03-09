@@ -30,6 +30,7 @@ def get_predictions(net, dataset, transform, ctx=mx.gpu()):
     """Returns a list with a prediction for each image on input dataset and a list
     with the ground truth labels. 
     """
+    net.collect_params().reset_ctx(ctx)
     dataset = dataset.transform(transform)
     net.set_nms(nms_thresh=0.45, nms_topk=400)
     net.hybridize(static_alloc=True, static_shape=True)
@@ -143,26 +144,41 @@ def calc_detection(labels, preds, th=0.5, iou_th=0.5):
     return false_negatives, false_positives
 
 
-def benchmark(n_samples, ctx):
-    
-    dataset = RealDataset(train=False)
-    out = {}
-    for model in cfg.used_model_names:
-        net, transform = load_model(model, ctx=ctx)
-        net.hybridize(static_alloc=True, static_shape=True)
-        print(f'Testing model {model} on {ctx}.')
-        times = []
-        for i in range(n_samples):
-            img, label = dataset[i]
+def benchmark(net, dataset, transform, ctx):
+    net.collect_params().reset_ctx(ctx)
+    net.hybridize(static_alloc=True, static_shape=True)
+    # print(f'Testing model {model} on {ctx}.')
+    times = []
+    for img, label in dataset:
+            # img, label = dataset[i]
             tic = time.time()
             t = transform(img, label)
             x, label = t[0], t[1]
             ids, scores, bboxes = net(x.expand_dims(axis=0).as_in_context(ctx))
             mx.nd.waitall()
             times.append(time.time() - tic)
-        out[model] = times
-        del net
-    return out
+    
+    return times
+
+# def benchmark(n_samples, dataset, ctx):
+    # 
+    # out = {}
+    # for model in cfg.used_model_names:
+    #     net, transform = load_model(model, ctx=ctx)
+    #     net.hybridize(static_alloc=True, static_shape=True)
+    #     print(f'Testing model {model} on {ctx}.')
+    #     times = []
+    #     for i in range(n_samples):
+    #         img, label = dataset[i]
+    #         tic = time.time()
+    #         t = transform(img, label)
+    #         x, label = t[0], t[1]
+    #         ids, scores, bboxes = net(x.expand_dims(axis=0).as_in_context(ctx))
+    #         mx.nd.waitall()
+    #         times.append(time.time() - tic)
+    #     out[model] = times
+    #     del net
+    # return out
 
 
 def benchmark_all(n_samples, output_path):

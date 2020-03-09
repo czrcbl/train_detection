@@ -179,7 +179,7 @@ def load_model(model_type, model_name, dataset, ctx=mx.gpu()):
         # net = model_zoo.get_model('ssd_300_vgg16_atrous_coco', pretrained=True, ctx=ctx)
         params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/{model_name}/transfer_300_ssd_300_vgg16_atrous_coco_best.params')
         transform = transforms.presets.ssd.SSDDefaultValTransform(width=300, height=300)
-    elif model_type == 'ssd512':
+    elif model_type == 'ssd512' or model_type == 'ssd':
         net = model_zoo.get_model('ssd_512_resnet50_v1_coco', pretrained=True, ctx=ctx, prefix='ssd0_')
         params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/{model_name}/transfer_512_ssd_512_resnet50_v1_coco_best.params')
         transform = transforms.presets.ssd.SSDDefaultValTransform(width=512, height=512)
@@ -187,18 +187,35 @@ def load_model(model_type, model_name, dataset, ctx=mx.gpu()):
         net = model_zoo.get_model('yolo3_darknet53_coco', pretrained=True, ctx=ctx)
         params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/{model_name}/transfer_416_yolo3_darknet53_coco_best.params')
         transform = transforms.presets.yolo.YOLO3DefaultValTransform(width=416, height=416)
+    elif model_type == 'yolo':
+        net = model_zoo.get_model('yolo3_darknet53_coco', pretrained=True, ctx=ctx)
+        params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/{model_name}/transfer_608_yolo3_darknet53_coco_best.params')
+        transform = transforms.presets.yolo.YOLO3DefaultValTransform(width=608, height=608)
     elif model_type == 'frcnn':
         net = model_zoo.get_model('faster_rcnn_resnet50_v1b_coco', pretrained=True, ctx=ctx)
         params_path = pjoin(cfg.project_folder, f'data/checkpoints/{dataset}/{model_name}/transfer_faster_rcnn_resnet50_v1b_coco_best.params')
         transform = transforms.presets.rcnn.FasterRCNNDefaultValTransform(short=600)
     else:
-        raise NotImplementedError(f'Model {model_name} is not implemented.')
+        raise NotImplementedError(f'Model {model_type} is not implemented.')
         
     net.reset_class(classes=cfg.classes)
     net.initialize(force_reinit=True, ctx=ctx)
     net.load_parameters(params_path, ctx=ctx)
 
     return net, transform
+
+
+def map_history(path):
+
+    mAPs = []
+    with open(path, 'r') as f:
+        for line in f.readlines():
+            if line.strip()[:3] == 'mAP':
+                s = line.split('=')[1]
+                mAPs.append(float(s))
+    return mAPs
+        
+
 
 
 def parse_log(prefix):
@@ -286,7 +303,8 @@ def load_predictions(models, datasets):
 #     return out
 
 
-def calc_map(preds, labels, width, height, eval_metric):
+def calc_map(preds, labels, size, eval_metric):
+    width, height = size
     assert len(preds) == len(labels)
     eval_metric.reset()
     # clipper = gcv.nn.bbox.BBoxClipToImage()
