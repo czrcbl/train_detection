@@ -52,3 +52,8 @@ the models.
 * Folder `rendering` has all the code that is supposed to be run through blender. You must have the blender executable on system path.
 * Folder `scripts` has the scripts for launching the networks training, starting the rendering of synthetic images and producing some visualizations.
 * All the data necessary to train the models should be placed on the `data` folder.
+
+## Training a model
+
+Just call the model train scrip with the required arguments, models are saved under `data/chackpoints/<dataset_name>/<model_name>`:
+Some example calls are on the `command.py` file.

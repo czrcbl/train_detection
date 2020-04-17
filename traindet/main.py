@@ -106,6 +106,31 @@ def get_class_preds(labels, preds, th=0.5, iou_th=0.5):
     return predictions, ground_truth
 
 
+def get_class_preds_scores(labels, preds, iou_th=0.5):
+    n_classes = len(cfg.classes)
+    ground_truth = []
+    predictions = []
+    for pred, label in zip(preds, labels):
+        for i in range(label.shape[0]):
+            ground_truth.append(label[i, 4])
+            # Make sure that preidiction are ordered from highest to lowest score
+            args = pred[:, 5].argsort()[::-1]
+            opred = pred[args, :] 
+            for j in range(opred.shape[0]):
+                iou = bbox_iou(label[i, :4].reshape(1, -1), opred[j, :4].reshape(1, -1)).item()
+                if (iou > iou_th):
+                    if opred[j, 4] == label[i, 4]:
+                        predictions.append(opred[j, 5])
+                    else:
+                        predictions.append(0.0)  
+                    
+                    break
+            else:
+                predictions.append(0.0)
+    
+    return ground_truth, predictions
+
+
 def build_confusion_matrix(ground_truth, predictions, classes):
     classes = copy(classes)
     classes.append('Undetected')

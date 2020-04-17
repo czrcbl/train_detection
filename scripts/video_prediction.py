@@ -45,8 +45,9 @@ def parse_args():
     parser = argparse.ArgumentParser('Make predictions on every frame of input video and save output.')
     parser.add_argument('--input-file', help='Path to the input video.')
     parser.add_argument('--output-path', help='Path to the output.', default='')
-    parser.add_argument('--model', help='Model to use.')
-    parser.add_argument('--dataset', help='Dataset in which the model was trained.')
+    parser.add_argument('--model-type', help='Model type.')
+    parser.add_argument('--model-path', help='Model to use.')
+    # parser.add_argument('--dataset', help='Dataset in which the model was trained.')
     parser.add_argument('--th', default=0.5, type=float, help='Detection threshold to use.')
     parser.add_argument('--ctx', default='gpu', help='Context (cpu or gpu), default: gpu.')
     args = parser.parse_args()
@@ -56,11 +57,11 @@ def parse_args():
 def main():
 
     args = parse_args()
-    det = Detector(model=args.model, dataset=args.dataset, ctx=args.ctx)
+    det = Detector(model_path = args.model_path, model=args.model_type, ctx=args.ctx)
     if args.output_path:
         out_file = args.output_path
     else:
-        out_file = pjoin(cfg.data_folder, 'videos', f'{args.model}_{args.dataset}_{args.th}.mp4')
+        out_file = pjoin(cfg.data_folder, 'videos', f'{args.model_type}_{args.th}.mp4')
     predict_frames(args.input_file, out_file, det, th=args.th)
     
 
