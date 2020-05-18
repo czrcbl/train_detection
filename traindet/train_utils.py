@@ -6,12 +6,12 @@ from mxnet import autograd
 from gluoncv.data.batchify import Tuple, Stack, Pad
 from gluoncv.utils.metrics.voc_detection import VOC07MApMetric, VOCMApMetric
 
-from .utils import RealDataset, SynthDataset, RealGraspDataset
+from .utils import RealDataset, SynthDataset, RealGraspDataset, SpecRealDataset, SpecSynthDataset
 from .transforms import SSDValTransform, SSDTrainTransform
 from . import config as cfg
 
 
-def get_dataset(dataset, mixup=False):
+def get_dataset(dataset, mixup=False, tclass=None):
 
     if dataset.lower() == 'real':
         train_dataset = RealDataset(mode='train')
@@ -19,9 +19,14 @@ def get_dataset(dataset, mixup=False):
     elif dataset.lower() == 'real_with_grasp':
         train_dataset = RealGraspDataset(mode='train')
         val_dataset = RealGraspDataset(mode='test')
+    elif dataset.lower() == 'synth_spec':
+        train_dataset = SpecSynthDataset(tclass=tclass, root=pjoin(cfg.dataset_folder, 'synth_small_bg'), mode='all')
+        val_dataset = SpecRealDataset(tclass=tclass, mode='all')
     elif dataset.split('_')[0] == 'synth':
         train_dataset = SynthDataset(root=pjoin(cfg.dataset_folder, dataset), mode='all')
-        val_dataset = RealDataset(mode='all')  
+        val_dataset = RealDataset(mode='all')
+
+
     val_metric = VOCMApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
     
     if mixup:

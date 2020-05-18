@@ -136,6 +136,40 @@ cmds.yolo_small_bg = default_yolo('yolo_default', dataset, epochs)
 
 # model_training.extend([ssd_small_bg, frcnn_small_bg, yolo_small_bg])
 
+dataset = 'synth_spec'
+tclass = 'part3'
+name = 'frcnn_spec_part3'
+frcnn = f"""
+    python scripts/train_faster_rcnn.py
+        --transfer
+        --base-model faster_rcnn_resnet50_v1b_coco
+        --dataset {dataset}
+        --save-prefix {cfg.checkpoints_folder}/{dataset}/{name}/
+        --epochs {epochs}
+        --tclass {tclass}
+        --lr 0.001
+        --lr-decay 0.1
+        --lr-decay-epoch 20,40
+        --seed 233
+"""
+cmds.frcnn_spec_part3 = frcnn
+
+
+dataset = 'real'
+name = 'frcnn_test'
+frcnn = f"""
+    python scripts/train_faster_rcnn.py
+        --transfer
+        --base-model faster_rcnn_resnet50_v1b_coco
+        --dataset {dataset}
+        --save-prefix {cfg.checkpoints_folder}/{dataset}/{name}/
+        --epochs {epochs}
+        --lr 0.001
+        --lr-decay 0.1
+        --lr-decay-epoch 20,40
+        --seed 233
+"""
+cmds.frcnn_test = frcnn
 
 
 all_commandas = dataset_creation + model_training

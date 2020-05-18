@@ -118,6 +118,36 @@ class RealDataset(gdata.Dataset):
         return nd.array(img), np.array(ntgt)
 
 
+class SpecRealDataset(RealDataset):
+    
+    def __init__(self, tclass, **kargs):
+        super().__init__(**kargs)
+        self.tclasid = self.classes.index(tclass)
+        self.classes = [self.classes[self.tclasid]]
+
+    def __getitem__(self, idx):
+        
+        fn = self.fns[idx]
+        tgt = self.target[idx]
+        img = np.array(Image.open(fn))
+        heigt, width = img.shape[:2]
+
+        ids = tgt[:, 4].astype(np.int) == self.tclasid
+
+        ntgt = np.zeros(shape=tgt.shape)
+        ntgt[:, [0, 2]] = tgt[:, [0, 2]] * width
+        ntgt[:, [1, 3]] = tgt[:, [1, 3]] * heigt
+        ntgt[:, 4] = tgt[:, 4]
+        
+        ntgt = ntgt[ids, :]
+        # if ntgt.shape[0] == 0:
+        #     ntgt = np.array([[-1, -1, -1, -1, -1]])
+
+        return nd.array(img), np.array(ntgt)
+
+
+    
+
 class RealGraspDataset(gdata.Dataset):
     def __init__(self, root=cfg.real_grasp_dataset_folder, mode='train'):
         super(RealGraspDataset, self).__init__()
@@ -170,6 +200,34 @@ class SynthDataset(gdata.Dataset):
 
     def __getitem__(self, idx):
         return process_examples(self.fns[idx], self.targets[idx])
+
+
+class SpecSynthDataset(SynthDataset):
+    
+    def __init__(self, tclass, **kargs):
+        super().__init__(**kargs)
+        self.tclasid = self.classes.index(tclass)
+        self.classes = [self.classes[self.tclasid]]
+
+    def __getitem__(self, idx):
+        
+        fn = self.fns[idx]
+        tgt = self.targets[idx]
+        img = np.array(Image.open(fn))
+        heigt, width = img.shape[:2]
+
+        ids = tgt[:, 4].astype(np.int) == self.tclasid
+
+        ntgt = np.zeros(shape=tgt.shape)
+        ntgt[:, [0, 2]] = tgt[:, [0, 2]] * width
+        ntgt[:, [1, 3]] = tgt[:, [1, 3]] * heigt
+        ntgt[:, 4] = tgt[:, 4]
+        
+        ntgt = ntgt[ids, :]
+        # if ntgt.shape[0] == 0:
+        #     ntgt = np.array([[-1, -1, -1, -1, -1]])
+
+        return nd.array(img), np.array(ntgt)
 
 
 def load_model(model_type, model_name, dataset, ctx=mx.gpu()):

@@ -99,6 +99,8 @@ def parse_args():
     parser.add_argument('--static-alloc', action='store_true',
                         help='Whether to use static memory allocation. Memory usage will increase.')
 
+    parser.add_argument('--tclass', type=str, default=None)
+
     args = parser.parse_args()
 
     #args.dataset == 'custom':
@@ -465,7 +467,7 @@ if __name__ == '__main__':
     args.batch_size = len(ctx)  # 1 batch per device
 
     # training data
-    train_dataset, val_dataset, eval_metric = get_dataset(args.dataset, args.mixup)
+    train_dataset, val_dataset, eval_metric = get_dataset(args.dataset, args.mixup, tclass=args.tclass)
 
     if args.transfer:
         net_name = f'transfer_{args.base_model}'
