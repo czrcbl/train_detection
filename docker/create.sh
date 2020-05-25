@@ -1,6 +1,7 @@
 #!/usr/bin/bash
+
 docker run -it \
-    --mount type=bind,source=/home/$USER/traindet_docker,target=/home/user \
+    --mount type=bind,source=/home/$USER/Docker/traindet,target=/home/user \
     --gpus all \
     --env="DISPLAY" \
     --env="QT_X11_NO_MITSHM=1" \
@@ -8,6 +9,6 @@ docker run -it \
     --name traindet \
     traindet
 
-export containerId=$(docker ps -l -q)
-xhost +local:'docker inspect --format='' $containerId'
-docker start -a -i $containerId
+#export containerId=$(docker ps -l -q)
+#xhost +local:'docker inspect --format='' $containerId'
+#docker start -a -i $containerId

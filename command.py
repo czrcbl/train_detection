@@ -171,6 +171,24 @@ frcnn = f"""
 """
 cmds.frcnn_test = frcnn
 
+dataset = 'real'
+name = 'ssd_test'
+epochs = 5
+ssd = f"""
+    python scripts/train_ssd.py 
+        --transfer
+        --base-model ssd_512_resnet50_v1_coco
+        --data-shape 512
+        --dataset {dataset}
+        --save-prefix {cfg.checkpoints_folder}/{dataset}/{name}/
+        --batch-size 4
+        --epochs {epochs}
+        --lr 0.001
+        --lr-decay 0.1
+        --lr-decay-epoch 20,40
+        --seed 233
+    """
+cmds.ssd_test = ssd
 
 all_commandas = dataset_creation + model_training
 

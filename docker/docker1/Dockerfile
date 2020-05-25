@@ -1,4 +1,4 @@
-FROM nvidia/cudagl:10.1-devel-ubuntu18.04
+FROM nvidia/cudagl:10.1-runtime-ubuntu18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -8,16 +8,7 @@ ENV LC_ALL C.UTF-8
 
 # Install sudo
 RUN apt-get update && \
-    apt-get upgrade -y && \
       apt-get -y install sudo
-
-# Install user utils
-RUN apt install -y git \
-    wget \
-    nano \
-    python3-pip \
-    python-virtualenv \
-    zsh
 
 # Add user
 ENV USER=user
@@ -34,10 +25,12 @@ RUN groupadd $USER && \
     usermod  --uid $UID $USER && \
     groupmod --gid $GID $USER
 
-
+RUN apt install -y git \
+    wget \
+    nano \
+    python3-pip \
+    python-virtualenv 
 
 COPY post_install.sh /post_install.sh
 USER $USER
 WORKDIR /home/$USER
-RUN echo "export PATH=/usr/local/cuda/bin:/usr/local/cuda/NsightCompute-2019.1${PATH:+:${PATH}}" >> ~/.bashrc
-RUN /bin/bash -c "source /home/$USER/.bashrc"
