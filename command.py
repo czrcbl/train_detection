@@ -187,6 +187,7 @@ ssd = f"""
         --lr-decay 0.1
         --lr-decay-epoch 20,40
         --seed 233
+        --num-workers 0
     """
 cmds.ssd_test = ssd
 

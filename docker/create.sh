@@ -7,7 +7,7 @@ docker run -it \
     --env="QT_X11_NO_MITSHM=1" \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --name traindet \
-    traindet
+    czrcbl/dev:traindet102
 
 #export containerId=$(docker ps -l -q)
 #xhost +local:'docker inspect --format='' $containerId'
