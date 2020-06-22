@@ -66,6 +66,7 @@ class RealDataset(gdata.Dataset):
     def __init__(self, root=cfg.real_dataset_folder, mode='train'):
         super(RealDataset, self).__init__()
         self.classes = cfg.classes
+        self.CLASSES = cfg.classes
         # with open(pjoin(root, 'classes.txt'), 'r') as f:
         #     for line in f:
         #         classes.append(line.strip())
