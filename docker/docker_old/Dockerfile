@@ -51,8 +51,8 @@ RUN apt-get update && \
       apt-get -y install sudo
 
 # Add user
-ENV USER=user
-ENV PASSWD=user
+ENV USER=cezar
+ENV PASSWD=cezar
 ENV UID=1000
 ENV GID=1000
 
