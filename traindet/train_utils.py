@@ -22,6 +22,15 @@ def get_dataset(dataset, mixup=False, tclass=None):
     elif dataset.lower() == 'synth_spec':
         train_dataset = SpecSynthDataset(tclass=tclass, root=pjoin(cfg.dataset_folder, 'synth_small_bg'), mode='all')
         val_dataset = SpecRealDataset(tclass=tclass, mode='all')
+    elif dataset.lower() == 'synth_printer':
+        train_dataset = SynthDataset(root=pjoin(cfg.dataset_folder, 'synth_small_printer'), mode='all')
+        val_dataset = RealDataset(mode='all')
+    elif dataset.lower() == 'synth_part2':
+        train_dataset = SpecSynthDataset(root=pjoin(cfg.dataset_folder, 'synth_small_printer'), tclass='part2', mode='all')
+        val_dataset = SpecRealDataset(mode='all', tclass='part2')
+    elif dataset.lower() == 'synth_part3':
+        train_dataset = SpecSynthDataset(root=pjoin(cfg.dataset_folder, 'synth_small_printer'), tclass='part3', mode='all')
+        val_dataset = SpecRealDataset(mode='all', tclass='part3')
     elif dataset.split('_')[0] == 'synth':
         train_dataset = SynthDataset(root=pjoin(cfg.dataset_folder, dataset), mode='all')
         val_dataset = RealDataset(mode='all')

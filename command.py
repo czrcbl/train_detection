@@ -85,7 +85,7 @@ def default_frcnn(name, dataset, epochs):
             --epochs {epochs}
             --lr 0.001
             --lr-decay 0.1
-            --lr-decay-epoch 20,40
+            --lr-decay-epoch 15,25
             --seed 233
     """
 
@@ -189,6 +189,12 @@ ssd = f"""
         --seed 233
     """
 cmds.ssd_test = ssd
+
+cmds.frcnn_printer = default_frcnn('frcnn_default', 'synth_printer', 30)
+
+cmds.frcnn_part2 = default_frcnn('frcnn_default', 'synth_part2', 30)
+
+cmds.frcnn_part3 = default_frcnn('frcnn_default', 'synth_part3', 30)
 
 all_commandas = dataset_creation + model_training
 
