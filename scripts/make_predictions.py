@@ -40,7 +40,7 @@ def main():
     model = args.model
     
     _, val_ds, _ = get_dataset(dataset)
-    print(f'Prediction {dataset} dataset with {model} model.')
+    print(f'Prediction {dataset} dataset ({len(val_ds)} examples) with {model} model.')
     net, trans = load_model(args.model_type, model, dataset)
     if args.benchmark:
         times = benchmark(net, val_ds, trans, ctx=ctx)

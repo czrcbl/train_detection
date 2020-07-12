@@ -119,44 +119,77 @@ class RealDataset(gdata.Dataset):
         return nd.array(img), np.array(ntgt)
 
 
+# class SpecRealDataset(RealDataset):
+    
+#     def __init__(self, tclass, **kargs):
+#         super().__init__(**kargs)
+#         self.tclasid = self.classes.index(tclass)
+#         self.classes = [self.classes[self.tclasid]]
+#         if self.mode == 'train':
+#             out_fns = []
+#             out_targets = []
+#             for fn, tgt in zip(self.fns, self.target):
+#                 new_bbs = []
+#                 add = False
+#                 for bb in tgt:
+#                     if bb[4] == self.tclasid:
+#                         add = True
+#                         ot = np.array(bb)
+#                         ot[4] = 0
+#                         new_bbs.append(ot)
+#                 if add:    
+#                     out_fns.append(fn)
+#                     out_targets.append(np.array(new_bbs))
+#         elif self.mode == 'all':
+#             out_fns = []
+#             out_targets = []
+#             for fn, tgt in zip(self.fns, self.target):
+#                 new_bbs = []
+#                 add = False
+#                 for bb in tgt:
+#                     if bb[4] == self.tclasid:
+#                         ot = np.array(bb)
+#                         ot[4] = 0
+#                         new_bbs.append(ot)   
+#                 out_fns.append(fn)
+#                 out_targets.append(np.array(new_bbs))
+
+        
+#         self.fns = out_fns
+#         self.target = out_targets
+
+#     def __getitem__(self, idx):
+        
+#         fn = self.fns[idx]
+#         tgt = self.target[idx]
+#         img = np.array(Image.open(fn))
+#         heigt, width = img.shape[:2]
+
+#         if len(tgt) == 0:
+#             return nd.array(img), np.array([[0, 0, 0, 0, -1]])
+
+#         ids = tgt[:, 4].astype(np.int) == self.tclasid
+
+#         ntgt = np.zeros(shape=tgt.shape)
+#         ntgt[:, [0, 2]] = tgt[:, [0, 2]] * width
+#         ntgt[:, [1, 3]] = tgt[:, [1, 3]] * heigt
+#         ntgt[:, 4] = tgt[:, 4]
+#         ntgt[:, 4] = np.zeros((tgt.shape[0],))
+#         print(ntgt.shape)
+#         ntgt = ntgt[ids, :]
+#         print(ntgt.shape)
+#         # if ntgt.shape[0] == 0:
+#             # ntgt = np.array([[0, 0, 0, 0, -1]])
+
+#         return nd.array(img), np.array(ntgt)
+
+
 class SpecRealDataset(RealDataset):
     
     def __init__(self, tclass, **kargs):
         super().__init__(**kargs)
         self.tclasid = self.classes.index(tclass)
         self.classes = [self.classes[self.tclasid]]
-        if self.mode == 'train':
-            out_fns = []
-            out_targets = []
-            for fn, tgt in zip(self.fns, self.target):
-                new_bbs = []
-                add = False
-                for bb in tgt:
-                    if bb[4] == self.tclasid:
-                        add = True
-                        ot = np.array(bb)
-                        ot[4] = 0
-                        new_bbs.append(ot)
-                if add:    
-                    out_fns.append(fn)
-                    out_targets.append(np.array(new_bbs))
-        elif self.mode == 'all':
-            out_fns = []
-            out_targets = []
-            for fn, tgt in zip(self.fns, self.target):
-                new_bbs = []
-                add = False
-                for bb in tgt:
-                    if bb[4] == self.tclasid:
-                        ot = np.array(bb)
-                        ot[4] = 0
-                        new_bbs.append(ot)   
-                out_fns.append(fn)
-                out_targets.append(np.array(new_bbs))
-
-        
-        self.fns = out_fns
-        self.target = out_targets
 
     def __getitem__(self, idx):
         
@@ -165,19 +198,14 @@ class SpecRealDataset(RealDataset):
         img = np.array(Image.open(fn))
         heigt, width = img.shape[:2]
 
-        if len(tgt) == 0:
-            return nd.array(img), np.array([[0, 0, 0, 0, -1]])
-
         ids = tgt[:, 4].astype(np.int) == self.tclasid
+        if sum(ids) == 0:
+            return nd.array(img), np.array([[100, 100, 200, 200, -1]])
 
         ntgt = np.zeros(shape=tgt.shape)
         ntgt[:, [0, 2]] = tgt[:, [0, 2]] * width
         ntgt[:, [1, 3]] = tgt[:, [1, 3]] * heigt
-        ntgt[:, 4] = tgt[:, 4]
-        ntgt[:, 4] = np.zeros((tgt.shape[0],))
-        print(ntgt.shape)
         ntgt = ntgt[ids, :]
-        print(ntgt.shape)
         # if ntgt.shape[0] == 0:
             # ntgt = np.array([[0, 0, 0, 0, -1]])
 
@@ -240,30 +268,29 @@ class SynthDataset(gdata.Dataset):
         return process_examples(self.fns[idx], self.targets[idx])
 
 
-class SpecSynthDataset(SynthDataset):
+# class SpecSynthDataset(SynthDataset):
     
-    def __init__(self, tclass, **kargs):
-        super().__init__(**kargs)
-        self.tclasid = self.classes.index(tclass)
-        self.classes = [self.classes[self.tclasid]]
-        out_fns = []
-        out_targets = []
-        for fn, tgt in zip(self.fns, self.targets):
-            new_bbs = []
-            add = False
-            for bb in tgt:
-                if bb[4] == self.tclasid:
-                    add = True
-                    ot = np.array(bb)
-                    ot[4] = 0
-                    new_bbs.append(ot)
-            if add:    
-                out_fns.append(fn)
-                out_targets.append(np.array(new_bbs))
+#     def __init__(self, tclass, **kargs):
+#         super().__init__(**kargs)
+#         self.tclasid = self.classes.index(tclass)
+#         self.classes = [self.classes[self.tclasid]]
+#         out_fns = []
+#         out_targets = []
+#         for fn, tgt in zip(self.fns, self.targets):
+#             new_bbs = []
+#             add = False
+#             for bb in tgt:
+#                 if bb[4] == self.tclasid:
+#                     add = True
+#                     ot = np.array(bb)
+#                     ot[4] = 0
+#                     new_bbs.append(ot)
+#             if add:    
+#                 out_fns.append(fn)
+#                 out_targets.append(np.array(new_bbs))
         
-        self.fns = out_fns
-        self.targets = out_targets
-
+#         self.fns = out_fns
+#         self.targets = out_targets
 
     # def __getitem__(self, idx):
         
@@ -284,6 +311,35 @@ class SpecSynthDataset(SynthDataset):
     #     #     ntgt = np.array([[-1, -1, -1, -1, -1]])
 
     #     return nd.array(img), np.array(ntgt)
+
+
+class SpecSynthDataset(SynthDataset):
+    
+    def __init__(self, tclass, **kargs):
+        super().__init__(**kargs)
+        self.tclasid = self.classes.index(tclass)
+        self.classes = [self.classes[self.tclasid]]
+
+    def __getitem__(self, idx):
+        
+        fn = self.fns[idx]
+        tgt = self.targets[idx]
+        img = np.array(Image.open(fn))
+        heigt, width = img.shape[:2]
+
+        ids = tgt[:, 4].astype(np.int) == self.tclasid
+        if sum(ids) == 0:
+            return nd.array(img), np.array([[100, 100, 200, 200, -1]])
+
+        ntgt = np.zeros(shape=tgt.shape)
+        ntgt[:, [0, 2]] = tgt[:, [0, 2]] * width
+        ntgt[:, [1, 3]] = tgt[:, [1, 3]] * heigt
+        
+        ntgt = ntgt[ids, :]
+        # if ntgt.shape[0] == 0:
+        #     ntgt = np.array([[-1, -1, -1, -1, -1]])
+
+        return nd.array(img), np.array(ntgt)
 
 
 def load_model(model_type, model_name, dataset, ctx=mx.gpu()):
