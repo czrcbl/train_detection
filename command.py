@@ -85,7 +85,7 @@ def default_frcnn(name, dataset, epochs):
             --epochs {epochs}
             --lr 0.001
             --lr-decay 0.1
-            --lr-decay-epoch 20,40
+            --lr-decay-epoch 30,50
             --seed 233
     """
 
@@ -190,6 +190,20 @@ ssd = f"""
         --num-workers 0
     """
 cmds.ssd_test = ssd
+
+# cmds.frcnn_printer = default_frcnn('frcnn_default', 'synth_printer', 30)
+
+cmds.frcnn_part2 = default_frcnn('frcnn_default', 'synth_part2', 30)
+
+cmds.frcnn_part3 = default_frcnn('frcnn_default', 'synth_part3', 30)
+
+cmds.frcnn_dosing_5 = default_frcnn('frcnn_default', 'synth_dosing_nozzle', 5)
+
+epochs = 50
+dataset = 'synth_small_printer'
+cmds.ssd_printer = default_ssd('ssd_default', dataset, epochs)
+cmds.frcnn_printer = default_frcnn('frcnn_default', dataset, epochs)
+cmds.yolo_printer = default_yolo('yolo_default', dataset, epochs)
 
 all_commandas = dataset_creation + model_training
 

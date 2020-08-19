@@ -7,6 +7,13 @@ The rest of this repository contains the code base used on the article(s) [to be
 ### Installing CUDA 10.1
 You will need CUDA 10.1 in order to run `mxnet 1.51`, on Ubuntu:
 
+### On Ubuntu 20.04
+```bash
+sudo apt update
+sudo apt install nvidia-cuda-toolkit
+```
+
+### On Ubuntu 18.04
 Add Nvidia repository:
 ```bash
 sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub && echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
