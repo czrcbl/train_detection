@@ -158,7 +158,7 @@ cmds.frcnn_spec_part3 = frcnn
 dataset = 'real'
 name = 'frcnn_test'
 frcnn = f"""
-    python scripts/train_faster_rcnn.py
+    python scripts/train_frcnn.py
         --transfer
         --base-model faster_rcnn_resnet50_v1b_coco
         --dataset {dataset}
