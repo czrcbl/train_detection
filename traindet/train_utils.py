@@ -11,7 +11,7 @@ from .transforms import SSDValTransform, SSDTrainTransform
 from . import config as cfg
 
 
-def get_dataset(dataset, mixup=False, tclass=None):
+def get_dataset(dataset, args):
 
     if dataset.lower() == 'real':
         train_dataset = RealDataset(mode='train')
@@ -20,8 +20,8 @@ def get_dataset(dataset, mixup=False, tclass=None):
         train_dataset = RealGraspDataset(mode='train')
         val_dataset = RealGraspDataset(mode='test')
     elif dataset.lower() == 'synth_spec':
-        train_dataset = SpecSynthDataset(tclass=tclass, root=pjoin(cfg.dataset_folder, 'synth_small_bg'), mode='all')
-        val_dataset = SpecRealDataset(tclass=tclass, mode='all')
+        train_dataset = SpecSynthDataset(tclass=args.tclass, root=pjoin(cfg.dataset_folder, 'synth_small_bg'), mode='all')
+        val_dataset = SpecRealDataset(tclass=args.tclass, mode='all')
     elif dataset.lower() == 'synth_small_printer':
         train_dataset = SynthDataset(root=pjoin(cfg.dataset_folder, 'synth_small_printer'), mode='all')
         val_dataset = RealDataset(mode='test')
@@ -41,7 +41,7 @@ def get_dataset(dataset, mixup=False, tclass=None):
 
     val_metric = VOCMApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
     
-    if mixup:
+    if args.mixup:
         from gluoncv.data.mixup import detection
         train_dataset = detection.MixupDetection(train_dataset)
 
@@ -93,21 +93,17 @@ def validate_ssd(net, val_data, ctx, eval_metric):
         # update metric
         eval_metric.update(det_bboxes, det_ids, det_scores, gt_bboxes, gt_ids, gt_difficults)
     return eval_metric.get()
-
-
-def get_ssd_dataloader(net, train_dataset, val_dataset, data_shape, batch_size, 
-                   num_workers, bilateral_kernel_size, sigma_vals, grayscale):
-    """Get dataloader."""
-    width, height = data_shape, data_shape
-    # use fake data to generate fixed anchors for target generation
-    with autograd.train_mode():
-        _, _, anchors = net(mx.nd.zeros((1, 3, height, width)))
-    batchify_fn = Tuple(Stack(), Stack(), Stack())  # stack image, cls_targets, box_targets
-    train_loader = gluon.data.DataLoader(
-        train_dataset.transform(SSDTrainTransform(width, height, anchors, bilateral_kernel_size=bilateral_kernel_size, sigma_vals=sigma_vals, grayscale=grayscale)),
-        batch_size, True, batchify_fn=batchify_fn, last_batch='rollover', num_workers=num_workers)
-    val_batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
-    val_loader = gluon.data.DataLoader(
-        val_dataset.transform(SSDValTransform(width, height, bilateral_kernel_size=bilateral_kernel_size, sigma_vals=sigma_vals, grayscale=grayscale)),
-        batch_size, False, batchify_fn=val_batchify_fn, last_batch='keep', num_workers=num_workers)
-    return train_loader, val_loader
+    
+def save_params(net, logger, best_map, current_map, epoch, save_interval, prefix):
+    current_map = float(current_map)
+    if current_map > best_map[0]:
+        logger.info('[Epoch {}] mAP {} higher than current best {} saving to {}'.format(
+            epoch, current_map, best_map, '{:s}_best.params'.format(prefix)))
+        best_map[0] = current_map
+        net.save_parameters('{:s}_best.params'.format(prefix))
+        with open(prefix + '_best_map.log', 'a') as f:
+            f.write('{:04d}:\t{:.4f}\n'.format(epoch, current_map))
+    if save_interval and (epoch + 1) % save_interval == 0:
+        logger.info('[Epoch {}] Saving parameters to {}'.format(
+            epoch, '{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map)))
+        net.save_parameters('{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map))

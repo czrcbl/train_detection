@@ -42,7 +42,9 @@ except ImportError:
 from os.path import join as pjoin
 from traindet import config as cfg  
 from traindet.train_utils import get_dataset, save_params
-from traindet.utils import RealDataset, RealGraspDataset, SynthDataset
+from traindet.utils import RealDataset, RealGraspDataset, SynthDataset, SpecSynthDataset
+
+from traindet.train_utils import get_dataset
 
 
 def parse_args():
@@ -91,7 +93,7 @@ def parse_args():
                         help='Logging mini-batch interval. Default is 100.')
     parser.add_argument('--save-prefix', type=str, default='',
                         help='Saving parameter prefix')
-    parser.add_argument('--save-interval', type=int, default=1,
+    parser.add_argument('--save-interval', type=int, default=None,
                         help='Saving parameters epoch interval, best model will always be saved.')
     parser.add_argument('--val-interval', type=int, default=1,
                         help='Epoch interval for validation, increase the number will reduce the '
@@ -336,29 +338,29 @@ def parse_args():
 #         train_dataset = detection.MixupDetection(train_dataset)
 #     return train_dataset, val_dataset, val_metric
 
-def get_dataset(dataset, args):
+# def get_dataset(dataset, args):
 
-    if dataset.lower() == 'real':
-        train_dataset = RealDataset(mode='train')
-        val_dataset = RealDataset(mode='test')
-    elif dataset.lower() == 'real_with_grasp':
-        train_dataset = RealGraspDataset(mode='train')
-        val_dataset = RealGraspDataset(mode='test')
-    elif dataset.lower() == 'synth_spec':
-        train_dataset = SpecSynthDataset(tclass=tclass, root=pjoin(cfg.dataset_folder, 'synth_small_bg'), mode='all')
-        val_dataset = SpecRealDataset(tclass=tclass, mode='all')
-    elif dataset.split('_')[0] == 'synth':
-        train_dataset = SynthDataset(root=pjoin(cfg.dataset_folder, dataset), mode='all')
-        val_dataset = RealDataset(mode='all')
+#     if dataset.lower() == 'real':
+#         train_dataset = RealDataset(mode='train')
+#         val_dataset = RealDataset(mode='test')
+#     elif dataset.lower() == 'real_with_grasp':
+#         train_dataset = RealGraspDataset(mode='train')
+#         val_dataset = RealGraspDataset(mode='test')
+#     # elif dataset.lower() == 'synth_spec':
+#     #     train_dataset = SpecSynthDataset(tclass=tclass, root=pjoin(cfg.dataset_folder, 'synth_small_bg'), mode='all')
+#     #     val_dataset = SpecRealDataset(tclass=tclass, mode='all')
+#     elif dataset.split('_')[0] == 'synth':
+#         train_dataset = SynthDataset(root=pjoin(cfg.dataset_folder, dataset), mode='all')
+#         val_dataset = RealDataset(mode='all')
 
 
-    val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
+#     val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
     
-    if args.mixup:
-        from gluoncv.data.mixup import detection
-        train_dataset = detection.MixupDetection(train_dataset)
+#     if args.mixup:
+#         from gluoncv.data.mixup import detection
+#         train_dataset = detection.MixupDetection(train_dataset)
 
-    return train_dataset, val_dataset, val_metric
+#     return train_dataset, val_dataset, val_metric
 
 
 def get_dataloader(net, train_dataset, val_dataset, train_transform, val_transform, batch_size,
@@ -386,19 +388,19 @@ def get_dataloader(net, train_dataset, val_dataset, train_transform, val_transfo
     return train_loader, val_loader
 
 
-def save_params(net, logger, best_map, current_map, epoch, save_interval, prefix):
-    current_map = float(current_map)
-    if current_map > best_map[0]:
-        logger.info('[Epoch {}] mAP {} higher than current best {} saving to {}'.format(
-            epoch, current_map, best_map, '{:s}_best.params'.format(prefix)))
-        best_map[0] = current_map
-        net.save_parameters('{:s}_best.params'.format(prefix))
-        with open(prefix + '_best_map.log', 'a') as f:
-            f.write('{:04d}:\t{:.4f}\n'.format(epoch, current_map))
-    if save_interval and (epoch + 1) % save_interval == 0:
-        logger.info('[Epoch {}] Saving parameters to {}'.format(
-            epoch, '{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map)))
-        net.save_parameters('{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map))
+# def save_params(net, logger, best_map, current_map, epoch, save_interval, prefix):
+#     current_map = float(current_map)
+#     if current_map > best_map[0]:
+#         logger.info('[Epoch {}] mAP {} higher than current best {} saving to {}'.format(
+#             epoch, current_map, best_map, '{:s}_best.params'.format(prefix)))
+#         best_map[0] = current_map
+#         net.save_parameters('{:s}_best.params'.format(prefix))
+#         with open(prefix + '_best_map.log', 'a') as f:
+#             f.write('{:04d}:\t{:.4f}\n'.format(epoch, current_map))
+#     if save_interval and (epoch + 1) % save_interval == 0:
+#         logger.info('[Epoch {}] Saving parameters to {}'.format(
+#             epoch, '{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map)))
+#         net.save_parameters('{:s}_{:04d}_{:.4f}.params'.format(prefix, epoch, current_map))
 
 
 def split_and_load(batch, ctx_list):
@@ -657,7 +659,7 @@ if __name__ == '__main__':
             sym_norm_layer = None
             sym_norm_kwargs = None
         classes = train_dataset.CLASSES
-        net = get_model('custom_faster_rcnn_fpn', classes=classes, transfer=None,
+        net = get_model('custom_faster_rcnn_fpn', classes=classes,          transfer=None,
                         dataset=args.dataset, pretrained_base=not args.no_pretrained_base,
                         base_network_name=args.network, norm_layer=norm_layer,
                         norm_kwargs=norm_kwargs, sym_norm_kwargs=sym_norm_kwargs,
@@ -680,8 +682,9 @@ if __name__ == '__main__':
                         num_sample=args.rcnn_num_samples, pos_iou_thresh=args.rcnn_pos_iou_thresh,
                         pos_ratio=args.rcnn_pos_ratio, max_num_gt=args.max_num_gt)
     else:
-        net = get_model(net_name, pretrained_base=True,
-                        per_device_batch_size=args.batch_size // num_gpus, **kwargs)
+        net = get_model(net_name, pretrained_base=True, per_device_batch_size=args.batch_size // num_gpus, **kwargs)
+        # net = get_model(net_name, pretrained=True, per_device_batch_size=args.batch_size // num_gpus)
+        print('Here!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     if not args.save_prefix:
         args.save_prefix = os.path.join('data', 'checkpoints', args.dataset, args.name, net_name)
     else:

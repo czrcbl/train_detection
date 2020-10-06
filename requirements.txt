@@ -3,7 +3,6 @@ astroid==2.4.2
 async-timeout==3.0.1
 attrs==19.3.0
 backcall==0.2.0
--e git+git@github.com:czrcbl/bboxes.git@8b4fc4292362c0dfc284e3d0cc987a8a732841be#egg=bboxes
 bleach==3.1.5
 certifi==2020.4.5.1
 chardet==3.0.4
